@@ -4,8 +4,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SiweMessage } from "siwe";
 import { useAccount, useChainId, useDisconnect, useSignMessage, useSwitchChain } from "wagmi";
 import { ROBINHOOD_CHAIN_ID } from "@/lib/chain";
+import { isWalletSessionCurrent, walletSessionIdentityMismatch, type BrowserSession } from "@/lib/wallet-session-policy";
 
-type Session = { authenticated: boolean; address: string | null; chainId: number | null; expiresAt: string | null };
+type Session = BrowserSession;
 type WalletState = {
   address?: `0x${string}`; connectorName?: string; isConnected: boolean; isCorrectNetwork: boolean;
   isSignedIn: boolean; isLoading: boolean; isSigningIn: boolean; error: string | null;
@@ -31,7 +32,7 @@ export function WalletSessionProvider({ children }: { children: React.ReactNode 
   const [error, setError] = useState<string | null>(null);
   const invalidating = useRef(false);
   const session = useQuery({ queryKey: ["wallet-session"], queryFn: () => json<Session>("/api/auth/session"), refetchOnWindowFocus: true });
-  const isSignedIn = Boolean(session.data?.authenticated && account.address && session.data.address?.toLowerCase() === account.address.toLowerCase() && session.data.chainId === chainId && session.data.expiresAt && new Date(session.data.expiresAt) > new Date());
+  const isSignedIn = isWalletSessionCurrent(session.data, account.address, chainId);
 
   const signOut = useCallback(async () => {
     await json("/api/auth/logout", { method: "POST" });
@@ -40,7 +41,7 @@ export function WalletSessionProvider({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     if (!session.data?.authenticated || invalidating.current || account.status === "reconnecting" || account.status === "connecting") return;
-    const mismatch = !account.address || session.data.address?.toLowerCase() !== account.address.toLowerCase() || session.data.chainId !== chainId;
+    const mismatch = walletSessionIdentityMismatch(session.data, account.address, chainId);
     if (!mismatch) return;
     invalidating.current = true;
     signOut().catch(() => queryClient.invalidateQueries({ queryKey: ["wallet-session"] })).finally(() => { invalidating.current = false; });

@@ -8,11 +8,15 @@ import { storage } from "../lib/storage";
 import { normalizeGeneratedImage } from "../lib/image-processing";
 import { failedAttemptStatus } from "../lib/worker-state";
 import { superviseWorker } from "../lib/worker-runtime";
+import { bullWorkerConnection } from "../lib/redis-connection";
 
 if (!process.env.REDIS_URL || !process.env.OPENAI_API_KEY) throw new Error("REDIS_URL and OPENAI_API_KEY are required");
-const redis = new URL(process.env.REDIS_URL);
-const connection = { host: redis.hostname, port: Number(redis.port || 6379), username: redis.username || undefined, password: redis.password || undefined, tls: redis.protocol === "rediss:" ? {} : undefined };
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const connection = bullWorkerConnection(process.env.REDIS_URL);
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  timeout: Number(process.env.OPENAI_TIMEOUT_MS || 120_000),
+  maxRetries: Number(process.env.OPENAI_MAX_RETRIES || 1),
+});
 const sizes = { SQUARE: "1024x1024", LANDSCAPE: "1536x1024", PORTRAIT: "1024x1536" } as const;
 
 const worker = new Worker("image-generation", async (bullJob) => {
