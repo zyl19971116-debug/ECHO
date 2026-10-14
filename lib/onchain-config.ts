@@ -5,7 +5,7 @@ import { assertRobinhoodChain, ROBINHOOD_EXPLORER, ROBINHOOD_CHAIN_ID } from "@/
 
 export { ROBINHOOD_CHAIN_ID, ROBINHOOD_EXPLORER };
 export const robinhoodMainnet = defineChain({ id: ROBINHOOD_CHAIN_ID, name: "Robinhood Chain", nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: ["https://rpc.mainnet.chain.robinhood.com"] } }, blockExplorers: { default: { name: "Robinhood Chain Explorer", url: ROBINHOOD_EXPLORER, apiUrl: `${ROBINHOOD_EXPLORER}/api` } }, testnet: false });
-export function rpcUrl() { return process.env.ROBINHOOD_MAINNET_RPC_URL || robinhoodMainnet.rpcUrls.default.http[0]; }
+export function rpcUrl() { return process.env.ROBINHOOD_SERVER_RPC_URL || process.env.ROBINHOOD_MAINNET_RPC_URL || robinhoodMainnet.rpcUrls.default.http[0]; }
 export function publicChainClient() { return createPublicClient({ chain: robinhoodMainnet, transport: http(rpcUrl(), { timeout: 15_000 }) }); }
 export async function checkedPublicClient() { const client = publicChainClient(); assertRobinhoodChain(await client.getChainId()); return client; }
 export function contractAddresses() { if (!process.env.ECHO_MAINNET_NFT_ADDRESS || !process.env.ECHO_MAINNET_REGISTRY_ADDRESS) throw new Error("CONTRACTS_NOT_DEPLOYED"); return { nft: getAddress(process.env.ECHO_MAINNET_NFT_ADDRESS), registry: getAddress(process.env.ECHO_MAINNET_REGISTRY_ADDRESS) }; }

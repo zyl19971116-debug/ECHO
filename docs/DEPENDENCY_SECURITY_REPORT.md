@@ -77,3 +77,7 @@ The rows below record every remaining npm audit package entry. Entries with no d
 ## Release decision
 
 Do not describe this tree as vulnerability-free. Before production release, either migrate the WalletConnect/Wagmi tree to versions that remove the five production high findings, or document a time-bounded, owner-approved risk acceptance with compensating monitoring. The Next 16, Tailwind 4 and Hardhat 3 migrations should be isolated projects with UI/contract regression gates rather than forced audit upgrades.
+
+## Phase 6A follow-up
+
+On 2026-10-14, `npm audit fix --omit=dev --package-lock-only --ignore-scripts` applied compatible lockfile remediations without `--force`. The production audit improved from 29 findings (24 moderate, 5 high) to **26 findings (24 moderate, 2 high)**. The `braces`, `lodash`, and `micromatch` high findings are fixed. The two remaining high findings are Next's bundled PostCSS (npm proposes Next 16.4.0) and nested WalletConnect/Reown `ws` (npm proposes Wagmi 3.7.7). Both require breaking major migrations and remain unresolved.
