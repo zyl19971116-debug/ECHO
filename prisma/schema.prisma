@@ -95,6 +95,8 @@ model Challenge {
   settlement          SettlementJob?
   transitions         ChallengeTransitionLog[]
   previousEchoNode    EchoChainNode?           @relation("EchoNextChallenge")
+  onchainResult       OnchainResult?
+  nftAwardJobs        NFTAwardJob[]
   nextAnonymousNumber Int                      @default(1)
 }
 
@@ -223,6 +225,7 @@ model ChallengeResult {
   challenge          Challenge              @relation(fields: [challengeId], references: [id], onDelete: Cascade)
   winner             Submission             @relation(fields: [winnerSubmissionId], references: [id])
   entries            ChallengeResultEntry[]
+  onchainResult      OnchainResult?
 }
 
 model ChallengeResultEntry {
@@ -264,30 +267,107 @@ model ChallengeTransitionLog {
 }
 
 model Award {
-  id           String     @id @default(cuid())
+  id           String       @id @default(cuid())
   challengeId  String
   submissionId String
   userId       String
   rank         Int
   claimedAt    DateTime?
-  createdAt    DateTime   @default(now())
-  user         User       @relation(fields: [userId], references: [id])
-  submission   Submission @relation(fields: [submissionId], references: [id])
+  createdAt    DateTime     @default(now())
+  user         User         @relation(fields: [userId], references: [id])
+  submission   Submission   @relation(fields: [submissionId], references: [id])
   nft          NFTRecord?
+  nftJob       NFTAwardJob?
 
   @@unique([challengeId, rank])
 }
 
 model NFTRecord {
-  id              String   @id @default(cuid())
-  awardId         String   @unique
+  id              String    @id @default(cuid())
+  awardId         String    @unique
   tokenId         String?
   contractAddress String
   chainId         Int
   transactionHash String?
   status          String
-  createdAt       DateTime @default(now())
-  award           Award    @relation(fields: [awardId], references: [id], onDelete: Cascade)
+  ownerAddress    String?
+  metadataUrl     String?
+  mintedAt        DateTime?
+  createdAt       DateTime  @default(now())
+  award           Award     @relation(fields: [awardId], references: [id], onDelete: Cascade)
+}
+
+model ChainDeployment {
+  id                 String   @id @default(cuid())
+  contractName       String
+  contractAddress    String
+  chainId            Int
+  deploymentTxHash   String
+  deploymentBlock    String
+  deployerAddress    String
+  contractVersion    String
+  verificationStatus String   @default("UNVERIFIED")
+  createdAt          DateTime @default(now())
+
+  @@unique([chainId, contractName])
+  @@unique([chainId, contractAddress])
+}
+
+model OnchainResult {
+  id              String          @id @default(cuid())
+  challengeId     String          @unique
+  resultId        String          @unique
+  resultHash      String
+  chainId         Int
+  contractAddress String
+  status          String          @default("PENDING")
+  transactionHash String?         @unique
+  submittedAt     DateTime?
+  confirmedAt     DateTime?
+  blockNumber     String?
+  errorCode       String?
+  attempts        Int             @default(0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  challenge       Challenge       @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  result          ChallengeResult @relation(fields: [resultId], references: [id], onDelete: Cascade)
+}
+
+model NFTAwardJob {
+  id              String    @id @default(cuid())
+  challengeId     String
+  rank            Int
+  awardId         String    @unique
+  status          String    @default("PENDING")
+  transactionHash String?   @unique
+  metadataUrl     String?
+  tokenId         String?
+  errorCode       String?
+  attempts        Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  challenge       Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  award           Award     @relation(fields: [awardId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, rank])
+}
+
+model TransactionRecord {
+  id              String    @id @default(cuid())
+  businessKey     String    @unique
+  kind            String
+  chainId         Int
+  contractAddress String
+  transactionHash String?   @unique
+  status          String    @default("PENDING")
+  receiptStatus   String?
+  blockNumber     String?
+  confirmations   Int       @default(0)
+  errorCode       String?
+  submittedAt     DateTime?
+  confirmedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model EchoChainNode {

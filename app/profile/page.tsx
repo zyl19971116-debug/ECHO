@@ -67,8 +67,8 @@ export default function Profile() {
     { name: "MY WINS", items: p.awards.filter((a: any) => a.rank === 1), empty: "No challenge wins yet." },
     { name: "MY RESULTS", items: p.awards, empty: "No finalized placements yet." },
     {
-      name: "MY NFTs",
-      items: p.awards.filter((a: any) => a.nft),
+      name: "MY ACHIEVEMENT NFTS",
+      items: p.awards.filter((a: any) => a.nft?.ownerAddress?.toLowerCase() === p.walletAddress.toLowerCase()),
       empty: "No minted achievement NFTs yet.",
     },
   ];
@@ -108,6 +108,8 @@ export default function Profile() {
                         item.nft?.status ||
                         new Date(item.createdAt).toLocaleDateString()}
                     </p>
+                    {item.nft?.tokenId && <p className="mt-2 text-xs text-[#8da0b9]">TOKEN {item.nft.tokenId} · RANK {item.rank} · CHAIN {item.nft.chainId}</p>}
+                    {item.nft?.transactionHash && <a className="mt-2 block text-xs text-cyan-300" href={`https://explorer.testnet.chain.robinhood.com/tx/${item.nft.transactionHash}`} target="_blank" rel="noreferrer">VIEW ON EXPLORER ↗</a>}
                   </div>
                 ))}
               </div>

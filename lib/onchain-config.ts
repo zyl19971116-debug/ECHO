@@ -1,0 +1,14 @@
+import "server-only";
+import { defineChain, getAddress, http, createPublicClient, createWalletClient } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { assertRobinhoodTestnet, ROBINHOOD_EXPLORER, ROBINHOOD_TESTNET_CHAIN_ID } from "@/lib/onchain-policy";
+
+export { ROBINHOOD_TESTNET_CHAIN_ID, ROBINHOOD_EXPLORER };
+export const robinhoodTestnet = defineChain({ id: ROBINHOOD_TESTNET_CHAIN_ID, name: "Robinhood Chain Testnet", nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: ["https://rpc.testnet.chain.robinhood.com"] } }, blockExplorers: { default: { name: "Robinhood Testnet Explorer", url: ROBINHOOD_EXPLORER, apiUrl: `${ROBINHOOD_EXPLORER}/api` } }, testnet: true });
+export function rpcUrl() { return process.env.ROBINHOOD_SERVER_RPC_URL || robinhoodTestnet.rpcUrls.default.http[0]; }
+export function publicChainClient() { return createPublicClient({ chain: robinhoodTestnet, transport: http(rpcUrl(), { timeout: 15_000 }) }); }
+export async function checkedPublicClient() { const client = publicChainClient(); assertRobinhoodTestnet(await client.getChainId()); return client; }
+export function contractAddresses() { if (!process.env.ECHO_NFT_ADDRESS || !process.env.ECHO_REGISTRY_ADDRESS) throw new Error("CONTRACTS_NOT_CONFIGURED"); return { nft: getAddress(process.env.ECHO_NFT_ADDRESS), registry: getAddress(process.env.ECHO_REGISTRY_ADDRESS) }; }
+export async function awardWalletClient() { const key = process.env.AWARD_MINTER_PRIVATE_KEY; if (!key || !/^0x[0-9a-fA-F]{64}$/.test(key)) throw new Error("AWARD_MINTER_NOT_CONFIGURED"); const client = await checkedPublicClient(); const account = privateKeyToAccount(key as `0x${string}`); return { publicClient: client, walletClient: createWalletClient({ account, chain: robinhoodTestnet, transport: http(rpcUrl(), { timeout: 15_000 }) }), account }; }
+export function explorerTx(hash: string) { return `${ROBINHOOD_EXPLORER}/tx/${hash}`; }
+export function explorerAddress(address: string) { return `${ROBINHOOD_EXPLORER}/address/${address}`; }

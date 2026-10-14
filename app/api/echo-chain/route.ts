@@ -15,6 +15,7 @@ export async function GET() {
         nextChallenge: { select: { id: true, number: true, title: true, theme: true, status: true, publishedAt: true } },
         challenge: {
           include: {
+            onchainResult: true,
             result: {
               include: {
                 winner: {
@@ -29,7 +30,7 @@ export async function GET() {
         },
       },
     });
-    const nodes = raw.sort((a, b) => a.challenge.number - b.challenge.number).map((node) => ({ id: node.id, relation: node.relation, previousNodeId: node.previousNodeId, createdAt: node.createdAt, nextChallenge: node.nextChallenge?.publishedAt ? node.nextChallenge : node.nextChallenge ? { status: "PENDING_REVIEW" } : null, challenge: { id: node.challenge.id, number: node.challenge.number, title: node.challenge.title, theme: node.challenge.theme, result: node.challenge.result ? { finalizedAt: node.challenge.result.finalizedAt, resultHash: node.challenge.result.resultHash, winner: { id: node.challenge.result.winner.id, anonymousNumber: node.challenge.result.winner.anonymousNumber, title: node.challenge.result.winner.title, imageUrl: node.challenge.result.winner.imageUrl, creatorAddress: node.challenge.result.winner.creator.walletAddress, awards: node.challenge.result.winner.awards } } : null } }));
+    const nodes = raw.sort((a, b) => a.challenge.number - b.challenge.number).map((node) => ({ id: node.id, relation: node.relation, previousNodeId: node.previousNodeId, createdAt: node.createdAt, nextChallenge: node.nextChallenge?.publishedAt ? node.nextChallenge : node.nextChallenge ? { status: "PENDING_REVIEW" } : null, challenge: { id: node.challenge.id, number: node.challenge.number, title: node.challenge.title, theme: node.challenge.theme, result: node.challenge.result ? { finalizedAt: node.challenge.result.finalizedAt, resultHash: node.challenge.result.resultHash, onchainStatus: node.challenge.onchainResult?.status || "OFFCHAIN", transactionHash: node.challenge.onchainResult?.transactionHash || null, winner: { id: node.challenge.result.winner.id, anonymousNumber: node.challenge.result.winner.anonymousNumber, title: node.challenge.result.winner.title, imageUrl: node.challenge.result.winner.imageUrl, creatorAddress: node.challenge.result.winner.creator.walletAddress, awards: node.challenge.result.winner.awards } } : null } }));
     return NextResponse.json({ nodes });
   } catch {
     return NextResponse.json(

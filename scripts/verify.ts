@@ -1,0 +1,5 @@
+import { readFileSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+import hre from "hardhat";
+async function main() { const path = resolve("deployments/robinhood-testnet.json"); const artifact = JSON.parse(readFileSync(path, "utf8")); if (artifact.chainId !== 46630) throw new Error("WRONG_CHAIN_ID"); for (const name of ["EchoAchievementNFT", "EchoRecordRegistry"]) { const entry = artifact.contracts[name]; try { await hre.run("verify:verify", { address: entry.address, constructorArguments: entry.constructorArgs }); entry.verificationStatus = "VERIFIED"; } catch (error) { entry.verificationStatus = "UNVERIFIED"; entry.verificationError = error instanceof Error ? error.message : "VERIFY_FAILED"; } } writeFileSync(path, `${JSON.stringify(artifact, null, 2)}\n`); if (Object.values(artifact.contracts).some((x: any) => x.verificationStatus !== "VERIFIED")) throw new Error("ONE_OR_MORE_CONTRACTS_UNVERIFIED"); }
+main().catch((error) => { console.error(error instanceof Error ? error.message : "VERIFY_FAILED"); process.exitCode = 1; });

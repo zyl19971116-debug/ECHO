@@ -27,4 +27,11 @@ export const storage = {
   async getSignedUrl(objectKey: string) { const c = config(); return getSignedUrl(client(), new GetObjectCommand({ Bucket: c.bucket, Key: objectKey }), { expiresIn: 300 }); },
   async deleteObject(objectKey: string) { const c = config(); await client().send(new DeleteObjectCommand({ Bucket: c.bucket, Key: objectKey })); },
   async getObjectMetadata(objectKey: string) { const c = config(); return client().send(new HeadObjectCommand({ Bucket: c.bucket, Key: objectKey })); },
+  async uploadPublicJson(objectKey: string, value: unknown) {
+    const c = config();
+    const base = process.env.NFT_METADATA_BASE_URL || process.env.PUBLIC_ASSET_BASE_URL;
+    if (!base) throw new Error("NFT_METADATA_BASE_URL_NOT_CONFIGURED");
+    await client().send(new PutObjectCommand({ Bucket: c.bucket, Key: objectKey, Body: JSON.stringify(value), ContentType: "application/json", CacheControl: "public, max-age=31536000, immutable", Metadata: { visibility: "public" } }));
+    return `${base.replace(/\/$/, "")}/${objectKey}`;
+  },
 };

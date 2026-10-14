@@ -71,6 +71,10 @@ export default function EchoChain() {
                   <p className="mt-2 text-xs text-[#7187a3]">
                     {node.relation || "Genesis echo"}
                   </p>
+                  <p className="mt-3 break-all text-[10px] text-[#7187a3]">RESULT HASH · {node.challenge.result.resultHash}</p>
+                  <p className="mt-2 text-xs text-cyan-300">{node.challenge.result.onchainStatus === "CONFIRMED" ? "ONCHAIN VERIFIED" : "OFFCHAIN RESULT"}</p>
+                  <p className="mt-2 text-xs text-[#7187a3]">NFT AWARD · {node.challenge.result.winner.awards[0]?.nft?.status || "NOT MINTED"}</p>
+                  {node.challenge.result.transactionHash && <a className="mt-2 block text-xs text-cyan-300" href={`https://explorer.testnet.chain.robinhood.com/tx/${node.challenge.result.transactionHash}`} target="_blank" rel="noreferrer">VIEW ON EXPLORER ↗</a>}
                 </div>
               </article>
             ))}

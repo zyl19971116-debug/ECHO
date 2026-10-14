@@ -1,0 +1,20 @@
+ALTER TABLE "NFTRecord" ADD COLUMN "ownerAddress" TEXT, ADD COLUMN "metadataUrl" TEXT, ADD COLUMN "mintedAt" TIMESTAMP(3);
+
+CREATE TABLE "ChainDeployment" ("id" TEXT NOT NULL, "contractName" TEXT NOT NULL, "contractAddress" TEXT NOT NULL, "chainId" INTEGER NOT NULL, "deploymentTxHash" TEXT NOT NULL, "deploymentBlock" TEXT NOT NULL, "deployerAddress" TEXT NOT NULL, "contractVersion" TEXT NOT NULL, "verificationStatus" TEXT NOT NULL DEFAULT 'UNVERIFIED', "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "ChainDeployment_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "OnchainResult" ("id" TEXT NOT NULL, "challengeId" TEXT NOT NULL, "resultId" TEXT NOT NULL, "resultHash" TEXT NOT NULL, "chainId" INTEGER NOT NULL, "contractAddress" TEXT NOT NULL, "status" TEXT NOT NULL DEFAULT 'PENDING', "transactionHash" TEXT, "submittedAt" TIMESTAMP(3), "confirmedAt" TIMESTAMP(3), "blockNumber" TEXT, "errorCode" TEXT, "attempts" INTEGER NOT NULL DEFAULT 0, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL, CONSTRAINT "OnchainResult_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "NFTAwardJob" ("id" TEXT NOT NULL, "challengeId" TEXT NOT NULL, "rank" INTEGER NOT NULL, "awardId" TEXT NOT NULL, "status" TEXT NOT NULL DEFAULT 'PENDING', "transactionHash" TEXT, "metadataUrl" TEXT, "tokenId" TEXT, "errorCode" TEXT, "attempts" INTEGER NOT NULL DEFAULT 0, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL, CONSTRAINT "NFTAwardJob_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "TransactionRecord" ("id" TEXT NOT NULL, "businessKey" TEXT NOT NULL, "kind" TEXT NOT NULL, "chainId" INTEGER NOT NULL, "contractAddress" TEXT NOT NULL, "transactionHash" TEXT, "status" TEXT NOT NULL DEFAULT 'PENDING', "receiptStatus" TEXT, "blockNumber" TEXT, "confirmations" INTEGER NOT NULL DEFAULT 0, "errorCode" TEXT, "submittedAt" TIMESTAMP(3), "confirmedAt" TIMESTAMP(3), "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL, CONSTRAINT "TransactionRecord_pkey" PRIMARY KEY ("id"));
+CREATE UNIQUE INDEX "ChainDeployment_chainId_contractName_key" ON "ChainDeployment"("chainId", "contractName");
+CREATE UNIQUE INDEX "ChainDeployment_chainId_contractAddress_key" ON "ChainDeployment"("chainId", "contractAddress");
+CREATE UNIQUE INDEX "OnchainResult_challengeId_key" ON "OnchainResult"("challengeId");
+CREATE UNIQUE INDEX "OnchainResult_resultId_key" ON "OnchainResult"("resultId");
+CREATE UNIQUE INDEX "OnchainResult_transactionHash_key" ON "OnchainResult"("transactionHash");
+CREATE UNIQUE INDEX "NFTAwardJob_awardId_key" ON "NFTAwardJob"("awardId");
+CREATE UNIQUE INDEX "NFTAwardJob_transactionHash_key" ON "NFTAwardJob"("transactionHash");
+CREATE UNIQUE INDEX "NFTAwardJob_challengeId_rank_key" ON "NFTAwardJob"("challengeId", "rank");
+CREATE UNIQUE INDEX "TransactionRecord_businessKey_key" ON "TransactionRecord"("businessKey");
+CREATE UNIQUE INDEX "TransactionRecord_transactionHash_key" ON "TransactionRecord"("transactionHash");
+ALTER TABLE "OnchainResult" ADD CONSTRAINT "OnchainResult_challengeId_fkey" FOREIGN KEY ("challengeId") REFERENCES "Challenge"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "OnchainResult" ADD CONSTRAINT "OnchainResult_resultId_fkey" FOREIGN KEY ("resultId") REFERENCES "ChallengeResult"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "NFTAwardJob" ADD CONSTRAINT "NFTAwardJob_challengeId_fkey" FOREIGN KEY ("challengeId") REFERENCES "Challenge"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "NFTAwardJob" ADD CONSTRAINT "NFTAwardJob_awardId_fkey" FOREIGN KEY ("awardId") REFERENCES "Award"("id") ON DELETE CASCADE ON UPDATE CASCADE;

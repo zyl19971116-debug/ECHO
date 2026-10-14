@@ -38,13 +38,13 @@ const sections = [
   },
   {
     h: "NFT Minting",
-    s: "COMING SOON",
-    p: "Contracts and unit tests exist locally, but no deployment, claim flow or confirmed onchain mint is claimed.",
+    s: "PARTIAL",
+    p: "Testnet deployment, automatic server-authorized award minting, persistent metadata, receipt confirmation and recovery code are implemented. No contract deployment or mint is claimed until real addresses and successful receipts exist.",
   },
   {
     h: "Onchain Verification",
-    s: "COMING SOON",
-    p: "No deployed contract addresses or verified result transactions are configured.",
+    s: "PARTIAL",
+    p: "Robinhood Chain Testnet result registration, confirmation tracking, explorer links and Blockscout verification scripts are implemented. Contracts remain unverified and undeployed until credentials and funded testnet accounts are configured.",
   },
   {
     h: "Rate Limiting",
