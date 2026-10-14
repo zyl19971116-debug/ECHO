@@ -1,0 +1,9 @@
+node_modules
+.next
+.env
+coverage
+artifacts
+cache
+generated
+uploads
+*.log

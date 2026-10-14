@@ -1,0 +1,1 @@
+import {NextResponse} from "next/server";import {db} from "@/lib/db";export async function GET(){const challenge=await db.challenge.findFirst({where:{status:{in:["SUBMISSION","VOTING"]}},orderBy:{number:"desc"}});return NextResponse.json({challenge})}

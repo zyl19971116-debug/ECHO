@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+enum ChallengeStatus {
+  DRAFT
+  SUBMISSION
+  VOTING
+  REVEAL
+  FINALIZED
+}
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
+  DISQUALIFIED
+}
+enum JobStatus {
+  QUEUED
+  PROCESSING
+  SUCCEEDED
+  FAILED
+}
+model User {
+  id String @id @default(cuid())
+  walletAddress String @unique
+  createdAt DateTime @default(now())
+  sessions WalletSession[]
+  submissions Submission[]
+  generations GenerationJob[]
+  votes Vote[]
+  awards Award[]
+}
+model WalletSession {
+  id String @id @default(cuid())
+  userId String?
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  address String
+  nonce String @unique
+  expiresAt DateTime
+  verifiedAt DateTime?
+  createdAt DateTime @default(now())
+}
+model Challenge {
+  id String @id @default(cuid())
+  number Int @unique
+  title String
+  description String
+  theme String
+  submissionStart DateTime
+  submissionEnd DateTime
+  votingEnd DateTime
+  revealAt DateTime
+  status ChallengeStatus @default(DRAFT)
+  createdAt DateTime @default(now())
+  submissions Submission[]
+  votes Vote[]
+  result ChallengeResult?
+  echoNode EchoChainNode?
+}
+model Submission {
+  id String @id @default(cuid())
+  challengeId String
+  creatorUserId String
+  anonymousNumber Int
+  title String
+  description String
+  imageUrl String
+  imageHash String
+  status SubmissionStatus @default(SUBMITTED)
+  createdAt DateTime @default(now())
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  creator User @relation(fields: [creatorUserId], references: [id], onDelete: Cascade)
+  votes Vote[]
+  wonResult ChallengeResult?
+  awards Award[]
+  @@unique([challengeId, anonymousNumber])
+  @@unique([challengeId, creatorUserId])
+  @@index([challengeId, createdAt])
+}
+model GenerationJob {
+  id String @id @default(cuid())
+  userId String
+  challengeId String
+  prompt String
+  style String
+  format String
+  status JobStatus @default(QUEUED)
+  imageUrl String?
+  error String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, createdAt])
+}
+model Vote {
+  id String @id @default(cuid())
+  challengeId String
+  submissionId String
+  voterUserId String
+  signatureHash String
+  createdAt DateTime @default(now())
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  voter User @relation(fields: [voterUserId], references: [id], onDelete: Cascade)
+  @@unique([challengeId, voterUserId])
+  @@index([submissionId])
+}
+model ChallengeResult {
+  id String @id @default(cuid())
+  challengeId String @unique
+  winnerSubmissionId String @unique
+  resultHash String
+  finalizedAt DateTime
+  transactionHash String?
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  winner Submission @relation(fields: [winnerSubmissionId], references: [id])
+}
+model Award {
+  id String @id @default(cuid())
+  challengeId String
+  submissionId String
+  userId String
+  rank Int
+  claimedAt DateTime?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id])
+  submission Submission @relation(fields: [submissionId], references: [id])
+  nft NFTRecord?
+  @@unique([challengeId, rank])
+}
+model NFTRecord {
+  id String @id @default(cuid())
+  awardId String @unique
+  tokenId String?
+  contractAddress String
+  chainId Int
+  transactionHash String?
+  status String
+  createdAt DateTime @default(now())
+  award Award @relation(fields: [awardId], references: [id], onDelete: Cascade)
+}
+model EchoChainNode {
+  id String @id @default(cuid())
+  challengeId String @unique
+  previousNodeId String?
+  relation String?
+  createdAt DateTime @default(now())
+  challenge Challenge @relation(fields: [challengeId], references: [id])
+}
+model AuditLog {
+  id String @id @default(cuid())
+  actorUserId String?
+  action String
+  entityType String
+  entityId String?
+  metadata Json?
+  createdAt DateTime @default(now())
+  @@index([action, createdAt])
+}
