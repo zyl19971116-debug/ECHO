@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { NetworkBadge, WalletConnectButton } from "@/components/wallet-controls";
 const links = [
   ["HOME", "/"],
@@ -15,8 +17,20 @@ const links = [
 ];
 export function Header() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const menuRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: KeyboardEvent | MouseEvent) => {
+      if (event instanceof KeyboardEvent && event.key === "Escape") setOpen(false);
+      if (event instanceof MouseEvent && menuRef.current && !menuRef.current.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("keydown", close);
+    document.addEventListener("mousedown", close);
+    return () => { document.removeEventListener("keydown", close); document.removeEventListener("mousedown", close); };
+  }, [open]);
   return (
-    <header className="sticky top-0 z-50 border-b hairline bg-[#050914d9] backdrop-blur-xl">
+    <header ref={menuRef} className="sticky top-0 z-50 border-b hairline bg-[#050914d9] backdrop-blur-xl">
       <div className="shell flex h-[74px] items-center gap-7">
         <Link
           href="/"
@@ -32,7 +46,8 @@ export function Header() {
         <nav className="hidden flex-1 justify-center gap-5 xl:flex">
           {links.map(([n, h]) => (
             <Link
-              className="display text-[10px] font-bold tracking-[.14em] text-[#9baec8] transition hover:text-white"
+              aria-current={pathname === h ? "page" : undefined}
+              className={`display text-[10px] font-bold tracking-[.14em] transition hover:text-white ${pathname === h ? "text-cyan-300" : "text-[#9baec8]"}`}
               href={h}
               key={h}
             >
@@ -48,16 +63,19 @@ export function Header() {
           className="ml-auto xl:hidden"
           onClick={() => setOpen(!open)}
           aria-label="Toggle menu"
+          aria-expanded={open}
+          aria-controls="mobile-navigation"
         >
           {open ? <X /> : <Menu />}
         </button>
       </div>
       {open && (
-        <div className="shell grid gap-1 border-t hairline py-4 xl:hidden">
+        <div id="mobile-navigation" className="shell grid gap-1 border-t hairline py-4 xl:hidden">
           {links.map(([n, h]) => (
             <Link
               onClick={() => setOpen(false)}
-              className="display py-3 text-xs tracking-[.15em] text-[#9baec8]"
+              aria-current={pathname === h ? "page" : undefined}
+              className={`display py-3 text-xs tracking-[.15em] ${pathname === h ? "text-cyan-300" : "text-[#9baec8]"}`}
               href={h}
               key={h}
             >

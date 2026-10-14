@@ -34,12 +34,12 @@ const sections = [
   {
     h: "Wallet & SIWE",
     s: "PARTIAL",
-    p: "Wagmi, RainbowKit and Viem provide real injected, Coinbase and optional WalletConnect connections on Robinhood Chain Testnet. SIWE uses one-time database nonces and revocable sessions; production deployment still requires Redis, PostgreSQL and a WalletConnect Project ID.",
+    p: "Wagmi, RainbowKit and Viem provide real injected, Coinbase and optional WalletConnect connections on Robinhood Mainnet. SIWE uses one-time database nonces and revocable sessions; production deployment still requires Redis, PostgreSQL and a WalletConnect Project ID.",
   },
   {
     h: "NFT Minting",
     s: "PARTIAL",
-    p: "Testnet deployment, automatic server-authorized award minting, persistent metadata, receipt confirmation and recovery code are implemented. No contract deployment or mint is claimed until real addresses and successful receipts exist.",
+    p: "Mainnet deployment tooling, automatic server-authorized award minting, persistent metadata, receipt confirmation and recovery code are implemented behind explicit approval. No contract deployment or mint is claimed until real addresses and successful receipts exist.",
   },
   {
     h: "Onchain Verification",

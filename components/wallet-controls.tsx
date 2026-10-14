@@ -1,7 +1,7 @@
 "use client";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Check, Copy, ExternalLink, LogOut, Wallet } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { robinhoodChain, walletConnectConfigured } from "@/lib/chain";
 import { useWalletSession } from "@/components/wallet-session-provider";
 
@@ -22,11 +22,22 @@ export function WalletConnectButton({ mobile = false }: { mobile?: boolean }) {
   const wallet = useWalletSession();
   const [menu, setMenu] = useState(false);
   const [copied, setCopied] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!menu) return;
+    const close = (event: KeyboardEvent | MouseEvent) => {
+      if (event instanceof KeyboardEvent && event.key === "Escape") setMenu(false);
+      if (event instanceof MouseEvent && menuRef.current && !menuRef.current.contains(event.target as Node)) setMenu(false);
+    };
+    document.addEventListener("keydown", close);
+    document.addEventListener("mousedown", close);
+    return () => { document.removeEventListener("keydown", close); document.removeEventListener("mousedown", close); };
+  }, [menu]);
   if (!wallet.isConnected) return <button className={`btn btn-primary ${mobile ? "w-full" : ""}`} onClick={openConnectModal}><Wallet size={14} />CONNECT WALLET</button>;
   const short = `${wallet.address?.slice(0, 6)}…${wallet.address?.slice(-4)}`;
-  return <div className="relative">
-    <button className="btn" onClick={() => setMenu(!menu)}><Wallet size={14} />{short}</button>
-    {menu && <div className="absolute right-0 top-12 z-[70] w-72 rounded-xl border border-[#29405f] bg-[#08111f] p-4 shadow-2xl">
+  return <div ref={menuRef} className="relative">
+    <button className="btn" aria-expanded={menu} aria-haspopup="menu" onClick={() => setMenu(!menu)}><Wallet size={14} />{short}</button>
+    {menu && <div role="menu" className="absolute right-0 top-12 z-[70] w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-[#29405f] bg-[#08111f] p-4 shadow-2xl">
       <p className="display text-xs text-white">{wallet.connectorName || "EVM WALLET"}</p>
       <p className="mt-1 text-xs text-[#91a6c3]">{short}</p>
       <div className="mt-3"><NetworkBadge /></div>
@@ -48,7 +59,7 @@ export function WalletSessionGuard({ children, copy = "Connect and sign in to co
   const wallet = useWalletSession();
   if (wallet.isLoading) return <div className="panel p-6 text-sm text-[#91a6c3]">CHECKING WALLET SESSION…</div>;
   if (!wallet.isConnected) return <div className="panel p-6"><p className="mb-4 text-sm text-[#91a6c3]">{copy}</p><WalletConnectButton /></div>;
-  if (!wallet.isCorrectNetwork) return <div className="panel p-6"><p className="mb-4 text-sm text-[#91a6c3]">Robinhood Chain Testnet is required.</p><SwitchNetworkButton /></div>;
+  if (!wallet.isCorrectNetwork) return <div className="panel p-6"><p className="mb-4 text-sm text-[#91a6c3]">Robinhood Mainnet (chain ID 4663) is required.</p><SwitchNetworkButton /></div>;
   if (!wallet.isSignedIn) return <div className="panel p-6"><p className="mb-4 text-sm text-[#91a6c3]">Sign a secure message to access this feature. No transaction or gas is required.</p><button className="btn btn-primary" disabled={wallet.isSigningIn} onClick={() => wallet.signIn().catch(() => undefined)}>{wallet.isSigningIn ? "WAITING FOR SIGNATURE…" : "SIGN IN"}</button></div>;
   return children;
 }
