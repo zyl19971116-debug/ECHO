@@ -7,3 +7,4 @@ cache
 generated
 uploads
 *.log
+*.tsbuildinfo

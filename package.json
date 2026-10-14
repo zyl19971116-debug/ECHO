@@ -1,6 +1,53 @@
 {
-  "name": "echo-market", "version": "1.0.0", "private": true,
-  "scripts": {"dev":"next dev","build":"prisma generate && next build","start":"next start","lint":"next lint","db:generate":"prisma generate","db:migrate":"prisma migrate dev","worker":"tsx workers/index.ts","contracts:compile":"hardhat compile","contracts:test":"hardhat test"},
-  "dependencies": {"@openzeppelin/contracts":"^5.1.0","@prisma/client":"^6.2.1","@rainbow-me/rainbowkit":"^2.2.2","@tanstack/react-query":"^5.66.0","bullmq":"^5.40.3","clsx":"^2.1.1","framer-motion":"^12.4.2","jose":"^5.9.6","lucide-react":"^0.475.0","next":"^15.1.7","openai":"^4.85.1","react":"^19.0.0","react-dom":"^19.0.0","react-hook-form":"^7.54.2","redis":"^5.0.0","siwe":"^3.0.0","tailwind-merge":"^3.0.1","viem":"^2.23.5","wagmi":"^2.14.11","zod":"^3.24.2"},
-  "devDependencies": {"@nomicfoundation/hardhat-toolbox":"^5.0.0","@types/node":"^22.13.1","@types/react":"^19.0.8","@types/react-dom":"^19.0.3","autoprefixer":"^10.4.20","hardhat":"^2.22.18","postcss":"^8.5.2","prisma":"^6.2.1","tailwindcss":"^3.4.17","tsx":"^4.19.2","typescript":"^5.7.3"}
+  "name": "echo-market",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "eslint app components lib workers test scripts hardhat.config.ts next.config.ts",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "worker": "tsx workers/index.ts",
+    "contracts:compile": "hardhat compile",
+    "contracts:test": "hardhat test"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.1.0",
+    "@prisma/client": "^6.2.1",
+    "@rainbow-me/rainbowkit": "^2.2.2",
+    "@tanstack/react-query": "^5.66.0",
+    "bullmq": "^5.40.3",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.4.2",
+    "jose": "^5.9.6",
+    "lucide-react": "^0.475.0",
+    "next": "^15.1.7",
+    "openai": "^4.85.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.54.2",
+    "redis": "^5.0.0",
+    "siwe": "^3.0.0",
+    "tailwind-merge": "^3.0.1",
+    "viem": "^2.23.5",
+    "wagmi": "^2.14.11",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@types/node": "^22.13.1",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^15.5.27",
+    "hardhat": "^2.22.18",
+    "postcss": "^8.5.2",
+    "prisma": "^6.2.1",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
 }

@@ -1,3 +1,51 @@
-import Link from "next/link"; export function PageTitle({kicker,title,copy}:{kicker:string,title:string,copy:string}){return <div className="mb-10 pt-16"><div className="eyebrow mb-4">{kicker}</div><h1 className="display text-5xl font-semibold tracking-[-.05em] md:text-7xl">{title}</h1><p className="mt-5 max-w-2xl text-[#9baec8]">{copy}</p></div>}
-export function Empty({title,copy,action,href}:{title:string,copy:string,action?:string,href?:string}){return <div className="panel flex min-h-64 flex-col items-center justify-center rounded-2xl p-8 text-center"><div className="mb-5 h-12 w-12 rounded-full border border-dashed border-[#31547a] bg-[#0b152a]"/><h3 className="display text-lg font-semibold">{title}</h3><p className="mt-2 max-w-md text-sm text-[#8194ae]">{copy}</p>{action&&href&&<Link className="btn mt-6" href={href}>{action}</Link>}</div>}
-export function PhasePill({phase}:{phase:string}){return <span className="rounded-full border border-cyan-400/30 bg-cyan-400/5 px-3 py-1 text-[9px] font-bold tracking-[.18em] text-cyan-300">{phase}</span>}
+import Link from "next/link";
+export function PageTitle({
+  kicker,
+  title,
+  copy,
+}: {
+  kicker: string;
+  title: string;
+  copy: string;
+}) {
+  return (
+    <div className="mb-10 pt-16">
+      <div className="eyebrow mb-4">{kicker}</div>
+      <h1 className="display text-5xl font-semibold tracking-[-.05em] md:text-7xl">
+        {title}
+      </h1>
+      <p className="mt-5 max-w-2xl text-[#9baec8]">{copy}</p>
+    </div>
+  );
+}
+export function Empty({
+  title,
+  copy,
+  action,
+  href,
+}: {
+  title: string;
+  copy: string;
+  action?: string;
+  href?: string;
+}) {
+  return (
+    <div className="panel flex min-h-64 flex-col items-center justify-center rounded-2xl p-8 text-center">
+      <div className="mb-5 h-12 w-12 rounded-full border border-dashed border-[#31547a] bg-[#0b152a]" />
+      <h3 className="display text-lg font-semibold">{title}</h3>
+      <p className="mt-2 max-w-md text-sm text-[#8194ae]">{copy}</p>
+      {action && href && (
+        <Link className="btn mt-6" href={href}>
+          {action}
+        </Link>
+      )}
+    </div>
+  );
+}
+export function PhasePill({ phase }: { phase: string }) {
+  return (
+    <span className="rounded-full border border-cyan-400/30 bg-cyan-400/5 px-3 py-1 text-[9px] font-bold tracking-[.18em] text-cyan-300">
+      {phase}
+    </span>
+  );
+}

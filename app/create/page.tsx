@@ -1,6 +1,314 @@
 "use client";
-import {useRef,useState} from "react";import {Download,Sparkles,Upload} from "lucide-react";import {PageTitle} from "@/components/ui";
-const sleep=(ms:number)=>new Promise(r=>setTimeout(r,ms));
-export default function Create(){const [prompt,setPrompt]=useState("");const [style,setStyle]=useState("FUTURISTIC");const [format,setFormat]=useState("SQUARE");const [busy,setBusy]=useState(false);const [status,setStatus]=useState("");const [result,setResult]=useState<any>(null);const running=useRef(false);
-async function generate(){if(busy)return;if(prompt.trim().length<8){setResult({error:"Please describe your idea using at least 8 characters."});return}setBusy(true);running.current=true;setResult(null);setStatus("Checking wallet, challenge, and AI service…");try{const r=await fetch("/api/generate",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({prompt:prompt.trim(),style,format})});const body=await r.json();if(!r.ok)throw new Error(body.error||"Generation request failed");setStatus("Generation queued. You may keep this page open.");for(let attempt=0;attempt<120&&running.current;attempt++){await sleep(2000);const poll=await fetch(`/api/generate/${body.jobId}`,{cache:"no-store"});const job=await poll.json();if(!poll.ok)throw new Error(job.error||"Could not read generation status");setStatus(job.status==="PROCESSING"?"AI is creating your artwork…":"Waiting for the generation worker…");if(job.status==="SUCCEEDED"){setResult(job);setStatus("");return}if(job.status==="FAILED")throw new Error(job.error||"Image generation failed")}throw new Error("Generation is still running. Refresh your profile shortly to check the result.")}catch(e){setResult({error:e instanceof Error?e.message:"Generation failed"});setStatus("")}finally{setBusy(false);running.current=false}}
-return <main className="shell pb-24"><PageTitle kicker="AI CREATION STUDIO" title="CREATE YOUR IDEA" copy="Turn a thought into an anonymous visual. Generation uses a real server-side image model—never a canned placeholder."/><div className="grid gap-6 lg:grid-cols-[.85fr_1.15fr]"><section className="panel rounded-2xl p-6 md:p-8"><label className="eyebrow" htmlFor="idea">DESCRIBE YOUR IDEA</label><textarea id="idea" value={prompt} onChange={e=>setPrompt(e.target.value)} maxLength={800} placeholder="A memory of rain preserved inside a glass machine…" className="mt-4 min-h-40 w-full resize-none rounded-xl border border-[#243b59] bg-[#050a14] p-5 text-base text-white placeholder:text-[#52647c]"/><div className="mt-2 flex justify-between text-[10px]"><span className={prompt.length>0&&prompt.trim().length<8?"text-amber-300":"text-[#60728d]"}>{prompt.length>0&&prompt.trim().length<8?"Minimum 8 characters":"Be specific about subject, mood and materials"}</span><span className="text-[#60728d]">{prompt.length} / 800</span></div><div className="mt-7 grid gap-5 sm:grid-cols-2"><label><span className="eyebrow">ART STYLE</span><select value={style} onChange={e=>setStyle(e.target.value)} className="mt-3 w-full rounded-lg border border-[#29425e] bg-[#071020] p-3 text-sm">{["FUTURISTIC","ABSTRACT","CYBERPUNK","MINIMAL","SURREAL","SCULPTURE"].map(x=><option key={x}>{x}</option>)}</select></label><label><span className="eyebrow">IMAGE FORMAT</span><select value={format} onChange={e=>setFormat(e.target.value)} className="mt-3 w-full rounded-lg border border-[#29425e] bg-[#071020] p-3 text-sm">{["SQUARE","LANDSCAPE","PORTRAIT"].map(x=><option key={x}>{x}</option>)}</select></label></div><button onClick={generate} disabled={busy} className="btn btn-primary mt-8 w-full disabled:cursor-wait disabled:opacity-60">{busy?<><i className="loader"/>{status||"GENERATING WITH AI"}</>:<><Sparkles size={16}/>GENERATE WITH AI</>}</button><p className="mt-4 text-xs leading-5 text-[#6f829c]">First use CONNECT &amp; SIGN IN in the navigation. A database, Redis worker, active submission challenge, storage, and OPENAI_API_KEY must be configured.</p>{result?.error&&<div role="alert" className="mt-5 rounded-lg border border-rose-400/25 bg-rose-400/5 p-4 text-sm text-rose-200">{result.error}</div>}</section><section className="panel flex min-h-[520px] items-center justify-center rounded-2xl p-6">{result?.imageUrl?<div className="w-full"><img src={result.imageUrl} alt="Generated artwork" className="max-h-[600px] w-full rounded-xl object-contain"/><div className="mt-4 flex gap-3"><a className="btn flex-1" href={result.imageUrl} download><Download size={14}/>DOWNLOAD</a><button className="btn btn-primary flex-1"><Upload size={14}/>SUBMIT</button></div></div>:<div className="text-center"><div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border border-dashed border-[#2d5378] bg-cyan-400/5"><Sparkles className="text-cyan-300/70" size={30}/></div><h3 className="display text-xl">{busy?"CREATING YOUR ECHO":"YOUR ECHO BEGINS HERE"}</h3><p className="mt-2 text-sm text-[#788ca7]">{busy?status:"The generated artwork will appear in this space."}</p></div>}</section></div></main>}
+import { useRef, useState } from "react";
+import Image from "next/image";
+import { Download, Sparkles, Upload } from "lucide-react";
+import { PageTitle } from "@/components/ui";
+import { useQuery } from "@tanstack/react-query";
+import { getJson } from "@/lib/client-api";
+import { StatusBadge } from "@/components/states";
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+export default function Create() {
+  const [prompt, setPrompt] = useState("");
+  const [style, setStyle] = useState("FUTURISTIC");
+  const [format, setFormat] = useState("SQUARE");
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState("");
+  const [result, setResult] = useState<any>(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState("");
+  const running = useRef(false);
+  const session = useQuery({
+    queryKey: ["session"],
+    queryFn: () => getJson<any>("/api/auth/session"),
+  });
+  const challenge = useQuery({
+    queryKey: ["challenge", "current"],
+    queryFn: () => getJson<any>("/api/challenges/current"),
+  });
+  const open =
+    challenge.data?.challenge?.status === "SUBMISSION" &&
+    new Date(challenge.data.challenge.submissionEnd) > new Date();
+  async function generate() {
+    if (busy) return;
+    if (prompt.trim().length < 8) {
+      setResult({
+        error: "Please describe your idea using at least 8 characters.",
+      });
+      return;
+    }
+    setBusy(true);
+    running.current = true;
+    setResult(null);
+    setSubmitMessage("");
+    setStatus("Checking wallet, challenge, and AI service…");
+    try {
+      const r = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ prompt: prompt.trim(), style, format }),
+      });
+      const body = await r.json();
+      if (!r.ok) throw new Error(body.error || "Generation request failed");
+      setStatus("Generation queued. You may keep this page open.");
+      for (let attempt = 0; attempt < 120 && running.current; attempt++) {
+        await sleep(2000);
+        const job = await getJson<any>(`/api/generate/${body.jobId}`);
+        setStatus(
+          job.status === "PROCESSING"
+            ? "AI is creating your artwork…"
+            : "Waiting for the generation worker…"
+        );
+        if (job.status === "SUCCEEDED") {
+          setResult({ ...job, jobId: body.jobId });
+          setTitle("Untitled Echo");
+          setStatus("");
+          return;
+        }
+        if (job.status === "FAILED")
+          throw new Error(job.error || "Image generation failed");
+      }
+      throw new Error(
+        "Generation is still running. Refresh your profile shortly to check the result."
+      );
+    } catch (e) {
+      setResult({
+        error: e instanceof Error ? e.message : "Generation failed",
+      });
+      setStatus("");
+    } finally {
+      setBusy(false);
+      running.current = false;
+    }
+  }
+  async function submit() {
+    if (!result?.imageUrl || !challenge.data?.challenge || !open) return;
+    setSubmitting(true);
+    setSubmitMessage("");
+    try {
+      const r = await fetch("/api/submissions", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          challengeId: challenge.data.challenge.id,
+          generationId: result.jobId || result.id,
+          title,
+          description,
+        }),
+      });
+      const body = await r.json();
+      if (!r.ok) throw new Error(body.error || "Submission failed");
+      setSubmitMessage(
+        `Submitted as ANON #${String(body.submission.anonymousNumber).padStart(
+          3,
+          "0"
+        )}.`
+      );
+    } catch (e) {
+      setSubmitMessage(e instanceof Error ? e.message : "Submission failed");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+  const gate = !session.data?.authenticated
+    ? "CONNECT & SIGN IN TO CREATE"
+    : !open
+    ? "SUBMISSIONS ARE NOT OPEN"
+    : "GENERATE WITH AI";
+  return (
+    <main className="shell pb-24">
+      <PageTitle
+        kicker="AI CREATION STUDIO"
+        title="CREATE YOUR IDEA"
+        copy="Turn a thought into an anonymous visual. Generation uses a real server-side image model—never a canned placeholder."
+      />
+      <div className="mb-5 flex flex-wrap gap-3">
+        <StatusBadge
+          status={
+            session.data?.authenticated ? "WALLET SIGNED IN" : "WALLET REQUIRED"
+          }
+        />
+        <StatusBadge
+          status={challenge.data?.challenge?.status || "NO ACTIVE CHALLENGE"}
+        />
+      </div>
+      <div className="grid gap-6 lg:grid-cols-[.85fr_1.15fr]">
+        <section className="panel rounded-2xl p-6 md:p-8">
+          <label className="eyebrow" htmlFor="idea">
+            DESCRIBE YOUR IDEA
+          </label>
+          <textarea
+            id="idea"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            maxLength={800}
+            placeholder="A memory of rain preserved inside a glass machine…"
+            className="mt-4 min-h-40 w-full resize-none rounded-xl border border-[#243b59] bg-[#050a14] p-5 text-base text-white placeholder:text-[#52647c]"
+          />
+          <div className="mt-2 flex justify-between text-[10px]">
+            <span
+              className={
+                prompt.length > 0 && prompt.trim().length < 8
+                  ? "text-amber-300"
+                  : "text-[#60728d]"
+              }
+            >
+              {prompt.length > 0 && prompt.trim().length < 8
+                ? "Minimum 8 characters"
+                : "Be specific about subject, mood and materials"}
+            </span>
+            <span className="text-[#60728d]">{prompt.length} / 800</span>
+          </div>
+          <div className="mt-7 grid gap-5 sm:grid-cols-2">
+            <label>
+              <span className="eyebrow">ART STYLE</span>
+              <select
+                value={style}
+                onChange={(e) => setStyle(e.target.value)}
+                className="mt-3 w-full rounded-lg border border-[#29425e] bg-[#071020] p-3 text-sm"
+              >
+                {[
+                  "FUTURISTIC",
+                  "ABSTRACT",
+                  "CYBERPUNK",
+                  "MINIMAL",
+                  "SURREAL",
+                  "SCULPTURE",
+                ].map((x) => (
+                  <option key={x}>{x}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span className="eyebrow">IMAGE FORMAT</span>
+              <select
+                value={format}
+                onChange={(e) => setFormat(e.target.value)}
+                className="mt-3 w-full rounded-lg border border-[#29425e] bg-[#071020] p-3 text-sm"
+              >
+                {["SQUARE", "LANDSCAPE", "PORTRAIT"].map((x) => (
+                  <option key={x}>{x}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <button
+            onClick={generate}
+            disabled={busy || !session.data?.authenticated || !open}
+            className="btn btn-primary mt-8 w-full disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {busy ? (
+              <>
+                <i className="loader" />
+                {status || "GENERATING WITH AI"}
+              </>
+            ) : (
+              <>
+                <Sparkles size={16} />
+                {gate}
+              </>
+            )}
+          </button>
+          {!session.isLoading && !session.data?.authenticated && (
+            <p className="mt-4 text-xs text-amber-200">
+              Use CONNECT &amp; SIGN IN in the navigation before generating.
+            </p>
+          )}
+          {session.data?.authenticated && !open && (
+            <p className="mt-4 text-xs text-amber-200">
+              There is no active submission window. Generation and submission
+              are disabled.
+            </p>
+          )}
+          {result?.error && (
+            <div
+              role="alert"
+              className="mt-5 rounded-lg border border-rose-400/25 bg-rose-400/5 p-4 text-sm text-rose-200"
+            >
+              {result.error}
+              <button
+                onClick={generate}
+                className="mt-3 block text-xs font-bold tracking-widest text-white"
+              >
+                RETRY →
+              </button>
+            </div>
+          )}
+        </section>
+        <section className="panel flex min-h-[520px] items-center justify-center rounded-2xl p-6">
+          {result?.imageUrl ? (
+            <div className="w-full">
+              <Image
+                src={result.imageUrl}
+                alt="Generated artwork"
+                width={1024}
+                height={1024}
+                unoptimized
+                className="max-h-[500px] w-full rounded-xl object-contain"
+              />
+              <div className="mt-5 grid gap-3">
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  maxLength={100}
+                  placeholder="Artwork title"
+                  className="rounded-lg border border-[#29425e] bg-[#071020] p-3"
+                />
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  maxLength={500}
+                  placeholder="Artwork description"
+                  className="min-h-20 rounded-lg border border-[#29425e] bg-[#071020] p-3"
+                />
+              </div>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                <a className="btn flex-1" href={result.imageUrl} download>
+                  <Download size={14} />
+                  DOWNLOAD
+                </a>
+                <button
+                  onClick={submit}
+                  disabled={
+                    submitting ||
+                    !open ||
+                    !session.data?.authenticated ||
+                    title.trim().length === 0
+                  }
+                  className="btn btn-primary flex-1 disabled:opacity-50"
+                >
+                  <Upload size={14} />
+                  {submitting
+                    ? "SUBMITTING…"
+                    : open
+                    ? "SUBMIT TO CHALLENGE"
+                    : "SUBMISSIONS CLOSED"}
+                </button>
+              </div>
+              {submitMessage && (
+                <p role="status" className="mt-4 text-sm text-cyan-200">
+                  {submitMessage}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="text-center">
+              <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border border-dashed border-[#2d5378] bg-cyan-400/5">
+                <Sparkles className="text-cyan-300/70" size={30} />
+              </div>
+              <h3 className="display text-xl">
+                {busy ? "CREATING YOUR ECHO" : "YOUR ECHO BEGINS HERE"}
+              </h3>
+              <p className="mt-2 text-sm text-[#788ca7]">
+                {busy
+                  ? status
+                  : "Generate an artwork before entering the challenge."}
+              </p>
+            </div>
+          )}
+        </section>
+      </div>
+    </main>
+  );
+}

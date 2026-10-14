@@ -1,3 +1,170 @@
-"use client"; import Link from "next/link"; import {Menu,X,Wallet,Copy} from "lucide-react"; import {useEffect,useState} from "react"; import {SiweMessage} from "siwe";
-const links=[["HOME","/"],["CREATE","/create"],["GALLERY","/gallery"],["VOTE","/vote"],["REVEAL","/reveal"],["ECHO CHAIN","/echo-chain"],["PROFILE","/profile"],["DOCS","/docs"]];
-export function Header(){const [open,setOpen]=useState(false);const [address,setAddress]=useState("");const [connecting,setConnecting]=useState(false);useEffect(()=>{const eth=(window as any).ethereum;if(!eth)return;const changed=(xs:string[])=>setAddress(xs[0]||"");eth.on?.("accountsChanged",changed);return()=>eth.removeListener?.("accountsChanged",changed)},[]);async function connect(){const eth=(window as any).ethereum;if(!eth)return alert("No EVM wallet detected. Install MetaMask, Rabby, Coinbase Wallet or Robinhood Wallet.");setConnecting(true);try{const [a]=await eth.request({method:"eth_requestAccounts"});const chainHex=await eth.request({method:"eth_chainId"});const nonceRes=await fetch("/api/auth/nonce",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({address:a})});const nonceBody=await nonceRes.json();if(!nonceRes.ok)throw new Error(nonceBody.error||"Could not request sign-in nonce");const message=new SiweMessage({domain:location.host,address:a,statement:"Sign in to ECHO MARKET. This does not initiate a transaction.",uri:location.origin,version:"1",chainId:Number(chainHex),nonce:nonceBody.nonce}).prepareMessage();const signature=await eth.request({method:"personal_sign",params:[message,a]});const verify=await fetch("/api/auth/verify",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({message,signature})});const verified=await verify.json();if(!verify.ok)throw new Error(verified.error||"Wallet sign-in failed");setAddress(a)}catch(e){alert(e instanceof Error?e.message:"Wallet connection or signature was rejected.")}finally{setConnecting(false)}}async function disconnect(){await fetch("/api/auth/logout",{method:"POST"});setAddress("")}return <header className="sticky top-0 z-50 border-b hairline bg-[#050914d9] backdrop-blur-xl"><div className="shell flex h-[74px] items-center gap-7"><Link href="/" className="display flex items-center gap-3 font-bold tracking-[.12em]"><span className="relative h-8 w-8 rounded-full border border-cyan-300 shadow-[0_0_20px_#21c8ff66]"><i className="absolute inset-[6px] rounded-full border border-purple-400"/></span><span>ECHO <b className="text-[#78dfff]">MARKET</b></span></Link><nav className="hidden flex-1 justify-center gap-5 xl:flex">{links.map(([n,h])=><Link className="display text-[10px] font-bold tracking-[.14em] text-[#9baec8] transition hover:text-white" href={h} key={h}>{n}</Link>)}</nav><div className="ml-auto hidden items-center gap-3 md:flex"><span className="display flex items-center gap-2 text-[9px] tracking-[.14em] text-[#91a6c3]"><i className="h-1.5 w-1.5 rounded-full bg-amber-400"/>CHAIN CONFIG REQUIRED</span>{address?<div className="flex items-center gap-2"><span className="btn">{address.slice(0,6)}…{address.slice(-4)}</span><button className="btn px-3" onClick={()=>navigator.clipboard.writeText(address)} aria-label="Copy address"><Copy size={14}/></button><button className="btn px-3" onClick={disconnect}>DISCONNECT</button></div>:<button disabled={connecting} className="btn btn-primary disabled:opacity-50" onClick={connect}><Wallet size={14}/>{connecting?"SIGNING IN…":"CONNECT & SIGN IN"}</button>}</div><button className="ml-auto xl:hidden" onClick={()=>setOpen(!open)} aria-label="Toggle menu">{open?<X/>:<Menu/>}</button></div>{open&&<div className="shell grid gap-1 border-t hairline py-4 xl:hidden">{links.map(([n,h])=><Link onClick={()=>setOpen(false)} className="display py-3 text-xs tracking-[.15em] text-[#9baec8]" href={h} key={h}>{n}</Link>)}<button disabled={connecting} className="btn btn-primary mt-2 md:hidden" onClick={connect}>{connecting?"SIGNING IN…":"CONNECT & SIGN IN"}</button></div>}</header>}
+"use client";
+import Link from "next/link";
+import { Menu, X, Wallet, Copy } from "lucide-react";
+import { useEffect, useState } from "react";
+import { SiweMessage } from "siwe";
+const links = [
+  ["HOME", "/"],
+  ["CREATE", "/create"],
+  ["GALLERY", "/gallery"],
+  ["VOTE", "/vote"],
+  ["REVEAL", "/reveal"],
+  ["ECHO CHAIN", "/echo-chain"],
+  ["PROFILE", "/profile"],
+  ["DOCS", "/docs"],
+];
+export function Header() {
+  const [open, setOpen] = useState(false);
+  const [address, setAddress] = useState("");
+  const [connecting, setConnecting] = useState(false);
+  useEffect(() => {
+    const eth = (window as any).ethereum;
+    if (!eth) return;
+    const changed = (xs: string[]) => setAddress(xs[0] || "");
+    eth.on?.("accountsChanged", changed);
+    return () => eth.removeListener?.("accountsChanged", changed);
+  }, []);
+  async function connect() {
+    const eth = (window as any).ethereum;
+    if (!eth)
+      return alert(
+        "No EVM wallet detected. Install MetaMask, Rabby, Coinbase Wallet or Robinhood Wallet."
+      );
+    setConnecting(true);
+    try {
+      const [a] = await eth.request({ method: "eth_requestAccounts" });
+      const chainHex = await eth.request({ method: "eth_chainId" });
+      const nonceRes = await fetch("/api/auth/nonce", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ address: a }),
+      });
+      const nonceBody = await nonceRes.json();
+      if (!nonceRes.ok)
+        throw new Error(nonceBody.error || "Could not request sign-in nonce");
+      const message = new SiweMessage({
+        domain: location.host,
+        address: a,
+        statement:
+          "Sign in to ECHO MARKET. This does not initiate a transaction.",
+        uri: location.origin,
+        version: "1",
+        chainId: Number(chainHex),
+        nonce: nonceBody.nonce,
+      }).prepareMessage();
+      const signature = await eth.request({
+        method: "personal_sign",
+        params: [message, a],
+      });
+      const verify = await fetch("/api/auth/verify", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message, signature }),
+      });
+      const verified = await verify.json();
+      if (!verify.ok)
+        throw new Error(verified.error || "Wallet sign-in failed");
+      setAddress(a);
+    } catch (e) {
+      alert(
+        e instanceof Error
+          ? e.message
+          : "Wallet connection or signature was rejected."
+      );
+    } finally {
+      setConnecting(false);
+    }
+  }
+  async function disconnect() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setAddress("");
+  }
+  return (
+    <header className="sticky top-0 z-50 border-b hairline bg-[#050914d9] backdrop-blur-xl">
+      <div className="shell flex h-[74px] items-center gap-7">
+        <Link
+          href="/"
+          className="display flex items-center gap-3 font-bold tracking-[.12em]"
+        >
+          <span className="relative h-8 w-8 rounded-full border border-cyan-300 shadow-[0_0_20px_#21c8ff66]">
+            <i className="absolute inset-[6px] rounded-full border border-purple-400" />
+          </span>
+          <span>
+            ECHO <b className="text-[#78dfff]">MARKET</b>
+          </span>
+        </Link>
+        <nav className="hidden flex-1 justify-center gap-5 xl:flex">
+          {links.map(([n, h]) => (
+            <Link
+              className="display text-[10px] font-bold tracking-[.14em] text-[#9baec8] transition hover:text-white"
+              href={h}
+              key={h}
+            >
+              {n}
+            </Link>
+          ))}
+        </nav>
+        <div className="ml-auto hidden items-center gap-3 md:flex">
+          <span className="display flex items-center gap-2 text-[9px] tracking-[.14em] text-[#91a6c3]">
+            <i className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+            CHAIN CONFIG REQUIRED
+          </span>
+          {address ? (
+            <div className="flex items-center gap-2">
+              <span className="btn">
+                {address.slice(0, 6)}…{address.slice(-4)}
+              </span>
+              <button
+                className="btn px-3"
+                onClick={() => navigator.clipboard.writeText(address)}
+                aria-label="Copy address"
+              >
+                <Copy size={14} />
+              </button>
+              <button className="btn px-3" onClick={disconnect}>
+                DISCONNECT
+              </button>
+            </div>
+          ) : (
+            <button
+              disabled={connecting}
+              className="btn btn-primary disabled:opacity-50"
+              onClick={connect}
+            >
+              <Wallet size={14} />
+              {connecting ? "SIGNING IN…" : "CONNECT & SIGN IN"}
+            </button>
+          )}
+        </div>
+        <button
+          className="ml-auto xl:hidden"
+          onClick={() => setOpen(!open)}
+          aria-label="Toggle menu"
+        >
+          {open ? <X /> : <Menu />}
+        </button>
+      </div>
+      {open && (
+        <div className="shell grid gap-1 border-t hairline py-4 xl:hidden">
+          {links.map(([n, h]) => (
+            <Link
+              onClick={() => setOpen(false)}
+              className="display py-3 text-xs tracking-[.15em] text-[#9baec8]"
+              href={h}
+              key={h}
+            >
+              {n}
+            </Link>
+          ))}
+          <button
+            disabled={connecting}
+            className="btn btn-primary mt-2 md:hidden"
+            onClick={connect}
+          >
+            {connecting ? "SIGNING IN…" : "CONNECT & SIGN IN"}
+          </button>
+        </div>
+      )}
+    </header>
+  );
+}
