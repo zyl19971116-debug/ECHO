@@ -38,10 +38,13 @@ model WalletSession {
   userId String?
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
   address String
+  chainId Int?
   nonce String @unique
   expiresAt DateTime
   verifiedAt DateTime?
+  revokedAt DateTime?
   createdAt DateTime @default(now())
+  @@index([address, verifiedAt])
 }
 model Challenge {
   id String @id @default(cuid())

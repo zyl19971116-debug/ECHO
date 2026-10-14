@@ -6,6 +6,7 @@ import { PageTitle } from "@/components/ui";
 import { useQuery } from "@tanstack/react-query";
 import { getJson } from "@/lib/client-api";
 import { StatusBadge } from "@/components/states";
+import { useWalletSession } from "@/components/wallet-session-provider";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export default function Create() {
   const [prompt, setPrompt] = useState("");
@@ -19,10 +20,7 @@ export default function Create() {
   const [submitting, setSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
   const running = useRef(false);
-  const session = useQuery({
-    queryKey: ["session"],
-    queryFn: () => getJson<any>("/api/auth/session"),
-  });
+  const wallet = useWalletSession();
   const challenge = useQuery({
     queryKey: ["challenge", "current"],
     queryFn: () => getJson<any>("/api/challenges/current"),
@@ -111,7 +109,9 @@ export default function Create() {
       setSubmitting(false);
     }
   }
-  const gate = !session.data?.authenticated
+  const gate = !wallet.isConnected
+    ? "CONNECT WALLET TO CREATE"
+    : !wallet.isSignedIn
     ? "CONNECT & SIGN IN TO CREATE"
     : !open
     ? "SUBMISSIONS ARE NOT OPEN"
@@ -126,7 +126,7 @@ export default function Create() {
       <div className="mb-5 flex flex-wrap gap-3">
         <StatusBadge
           status={
-            session.data?.authenticated ? "WALLET SIGNED IN" : "WALLET REQUIRED"
+            wallet.isSignedIn ? "WALLET SIGNED IN" : wallet.isConnected ? "SIGN-IN REQUIRED" : "WALLET REQUIRED"
           }
         />
         <StatusBadge
@@ -195,7 +195,7 @@ export default function Create() {
           </div>
           <button
             onClick={generate}
-            disabled={busy || !session.data?.authenticated || !open}
+            disabled={busy || !wallet.isSignedIn || !open}
             className="btn btn-primary mt-8 w-full disabled:cursor-not-allowed disabled:opacity-50"
           >
             {busy ? (
@@ -210,12 +210,12 @@ export default function Create() {
               </>
             )}
           </button>
-          {!session.isLoading && !session.data?.authenticated && (
+          {!wallet.isLoading && !wallet.isSignedIn && (
             <p className="mt-4 text-xs text-amber-200">
               Use CONNECT &amp; SIGN IN in the navigation before generating.
             </p>
           )}
-          {session.data?.authenticated && !open && (
+          {wallet.isSignedIn && !open && (
             <p className="mt-4 text-xs text-amber-200">
               There is no active submission window. Generation and submission
               are disabled.
@@ -273,7 +273,7 @@ export default function Create() {
                   disabled={
                     submitting ||
                     !open ||
-                    !session.data?.authenticated ||
+                    !wallet.isSignedIn ||
                     title.trim().length === 0
                   }
                   className="btn btn-primary flex-1 disabled:opacity-50"

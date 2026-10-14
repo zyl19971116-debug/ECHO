@@ -9,10 +9,14 @@ import {
   WalletRequiredState,
 } from "@/components/states";
 import { getJson } from "@/lib/client-api";
+import { WalletSessionGuard } from "@/components/wallet-controls";
+import { useWalletSession } from "@/components/wallet-session-provider";
 export default function Vote() {
+  const wallet = useWalletSession();
   const q = useQuery({
     queryKey: ["vote-status"],
     queryFn: () => getJson<any>("/api/votes/status"),
+    enabled: wallet.isSignedIn,
   });
   return (
     <main className="shell pb-24">
@@ -21,7 +25,9 @@ export default function Vote() {
         title="THE WORLD DECIDES."
         copy="Live rankings remain private. Voting will open only after one-time nonce consumption and eligibility checks are complete."
       />
-      {q.isLoading ? (
+      {!wallet.isSignedIn ? (
+        <WalletSessionGuard copy="Connect and sign in to check challenge phase, eligibility and your existing vote."><span /></WalletSessionGuard>
+      ) : q.isLoading ? (
         <LoadingState label="CHECKING VOTING STATUS" />
       ) : q.isError ? (
         <ErrorState

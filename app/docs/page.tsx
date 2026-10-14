@@ -34,7 +34,7 @@ const sections = [
   {
     h: "Wallet & SIWE",
     s: "PARTIAL",
-    p: "Injected EVM wallets and SIWE login are supported. Multi-wallet connectors, session restoration and network switching remain for the Web3 phase.",
+    p: "Wagmi, RainbowKit and Viem provide real injected, Coinbase and optional WalletConnect connections on Robinhood Chain Testnet. SIWE uses one-time database nonces and revocable sessions; production deployment still requires Redis, PostgreSQL and a WalletConnect Project ID.",
   },
   {
     h: "NFT Minting",
@@ -48,8 +48,8 @@ const sections = [
   },
   {
     h: "Rate Limiting",
-    s: "COMING SOON",
-    p: "A basic daily generation count exists, but production-grade atomic quotas and distributed API rate limiting are not implemented.",
+    s: "PARTIAL",
+    p: "SIWE nonce, verification and logout endpoints use fail-closed Redis-backed limits. A basic daily generation count exists; broader distributed quotas remain pending.",
   },
   {
     h: "Audit Logs",

@@ -8,12 +8,17 @@ import {
   WalletRequiredState,
 } from "@/components/states";
 import { getJson } from "@/lib/client-api";
+import { WalletSessionGuard } from "@/components/wallet-controls";
+import { useWalletSession } from "@/components/wallet-session-provider";
 export default function Profile() {
+  const wallet = useWalletSession();
   const q = useQuery({
     queryKey: ["profile"],
     queryFn: () => getJson<any>("/api/profile"),
     retry: false,
+    enabled: wallet.isSignedIn,
   });
+  if (!wallet.isSignedIn) return <main className="shell pb-24"><PageTitle kicker="YOUR PRIVATE RECORD" title="PROFILE" copy="Your creations, submissions, votes, awards and NFTs." /><WalletSessionGuard><span /></WalletSessionGuard></main>;
   if (q.isLoading)
     return (
       <main className="shell pb-24">

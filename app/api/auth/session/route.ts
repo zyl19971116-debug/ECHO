@@ -5,5 +5,7 @@ export async function GET() {
   return NextResponse.json({
     authenticated: Boolean(user),
     address: user?.address ?? null,
+    chainId: user?.chainId ?? null,
+    expiresAt: user?.expiresAt.toISOString() ?? null,
   });
 }

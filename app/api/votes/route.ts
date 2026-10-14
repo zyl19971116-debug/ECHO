@@ -3,6 +3,7 @@ import { z } from "zod";
 import { verifyMessage, keccak256, toBytes } from "viem";
 import { db } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
+import { hasTrustedOrigin } from "@/lib/request-security";
 const S = z.object({
   challengeId: z.string().cuid(),
   submissionId: z.string().cuid(),
@@ -13,6 +14,7 @@ const S = z.object({
   signature: z.string().regex(/^0x[0-9a-fA-F]+$/),
 });
 export async function POST(req: Request) {
+  if (!hasTrustedOrigin(req)) return NextResponse.json({ error: "UNTRUSTED_ORIGIN" }, { status: 403 });
   const me = await currentUser();
   if (!me)
     return NextResponse.json({ error: "AUTH_REQUIRED" }, { status: 401 });

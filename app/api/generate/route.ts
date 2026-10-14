@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Queue } from "bullmq";
 import { db } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
+import { hasTrustedOrigin } from "@/lib/request-security";
 const S = z.object({
   prompt: z.string().min(8).max(800),
   style: z.enum([
@@ -16,6 +17,7 @@ const S = z.object({
   format: z.enum(["SQUARE", "LANDSCAPE", "PORTRAIT"]),
 });
 export async function POST(req: Request) {
+  if (!hasTrustedOrigin(req)) return NextResponse.json({ error: "UNTRUSTED_ORIGIN" }, { status: 403 });
   if (!process.env.OPENAI_API_KEY)
     return NextResponse.json(
       { error: "AI SERVICE NOT CONFIGURED" },

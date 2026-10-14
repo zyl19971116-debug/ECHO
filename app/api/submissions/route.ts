@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import { publicSubmissionSelect } from "@/lib/public-dto";
+import { hasTrustedOrigin } from "@/lib/request-security";
 const S = z.object({
   challengeId: z.string().cuid(),
   generationId: z.string().cuid(),
@@ -75,6 +76,7 @@ export async function GET(req: Request) {
   }
 }
 export async function POST(req: Request) {
+  if (!hasTrustedOrigin(req)) return NextResponse.json({ error: "UNTRUSTED_ORIGIN" }, { status: 403 });
   const me = await currentUser();
   if (!me)
     return NextResponse.json({ error: "AUTH_REQUIRED" }, { status: 401 });
