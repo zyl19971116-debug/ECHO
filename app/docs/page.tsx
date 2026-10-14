@@ -9,12 +9,12 @@ const sections = [
   {
     h: "AI Image Generation",
     s: "PARTIAL",
-    p: "A real server-side OpenAI adapter and BullMQ worker exist. It requires configured credentials, Redis, PostgreSQL, an active challenge and production object storage before deployment.",
+    p: "The authenticated pipeline performs OpenAI prompt moderation, queued image generation, image moderation, metadata cleanup, SHA-256 hashing and private S3-compatible storage. Live operation requires configured OpenAI, Redis, PostgreSQL and object storage services.",
   },
   {
     h: "Anonymous Submission",
     s: "PARTIAL",
-    p: "Authenticated generated work can be submitted through the real API. Creator IDs are excluded from public DTOs, but the moderation and production storage pipeline remains incomplete.",
+    p: "Only the authenticated owner's approved, integrity-checked stored asset can be submitted. Anonymous numbers use a transactional challenge counter, and public DTOs exclude creator and private storage identity.",
   },
   {
     h: "Voting",
@@ -49,7 +49,7 @@ const sections = [
   {
     h: "Rate Limiting",
     s: "PARTIAL",
-    p: "SIWE nonce, verification and logout endpoints use fail-closed Redis-backed limits. A basic daily generation count exists; broader distributed quotas remain pending.",
+    p: "SIWE and AI request endpoints use fail-closed Redis limits. Daily generation quota is a transactional PostgreSQL record with reservation, confirmation and defined refund behavior; production thresholds remain configuration-dependent.",
   },
   {
     h: "Audit Logs",

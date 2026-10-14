@@ -81,6 +81,7 @@ export default function Profile() {
         )}…${p.walletAddress.slice(-6)}`}
       />
       <div className="grid gap-5 lg:grid-cols-2">
+        <section className="panel rounded-2xl p-6"><div className="flex items-center justify-between"><h2 className="display text-xl">GENERATION QUOTA</h2><StatusBadge status={`${p.quota.remaining} LEFT`} /></div><p className="mt-5 text-sm text-[#7f93ad]">{p.quota.consumed} completed / {p.quota.limit} daily slots · resets at 00:00 UTC</p></section>
         {groups.map((group) => (
           <section className="panel rounded-2xl p-6" key={group.name}>
             <div className="flex items-center justify-between">

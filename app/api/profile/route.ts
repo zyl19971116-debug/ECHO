@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
+import { storage } from "@/lib/storage";
+import { quotaStatus } from "@/lib/quota";
 export async function GET() {
   const user = await currentUser();
   if (!user)
@@ -20,6 +22,8 @@ export async function GET() {
             style: true,
             format: true,
             createdAt: true,
+            error: true,
+            asset: { select: { objectKey: true, sha256: true } },
           },
         },
         submissions: {
@@ -70,7 +74,9 @@ export async function GET() {
         },
       },
     });
-    return NextResponse.json({ profile: data });
+    if (!data) return NextResponse.json({ error: "PROFILE_NOT_FOUND" }, { status: 404 });
+    const generations = await Promise.all(data.generations.map(async (item) => ({ ...item, asset: undefined, imageUrl: item.asset && item.status === "COMPLETED" ? await storage.getSignedUrl(item.asset.objectKey) : null, imageHash: item.asset?.sha256 || null })));
+    return NextResponse.json({ profile: { ...data, generations, quota: await quotaStatus(user.userId) } });
   } catch {
     return NextResponse.json({ error: "PROFILE_UNAVAILABLE" }, { status: 503 });
   }

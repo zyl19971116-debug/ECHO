@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Download, Sparkles, Upload } from "lucide-react";
 import { PageTitle } from "@/components/ui";
@@ -25,6 +25,18 @@ export default function Create() {
     queryKey: ["challenge", "current"],
     queryFn: () => getJson<any>("/api/challenges/current"),
   });
+  const generations = useQuery({
+    queryKey: ["generations"],
+    queryFn: () => getJson<any>("/api/generations"),
+    enabled: wallet.isSignedIn,
+    refetchInterval: (query) => query.state.data?.generations?.some((job: any) => ["PENDING", "QUEUED", "PROCESSING", "RETRYING"].includes(job.status)) ? 3000 : false,
+  });
+  useEffect(() => {
+    if (result || !generations.data?.generations?.length) return;
+    const latest = generations.data.generations[0];
+    if (latest.imageUrl || ["FAILED", "REJECTED"].includes(latest.status)) setResult({ ...latest, jobId: latest.id });
+    else if (["PENDING", "QUEUED", "PROCESSING", "RETRYING"].includes(latest.status)) setStatus(latest.status === "PROCESSING" ? "AI is creating your artwork…" : "Your generation is queued or retrying…");
+  }, [generations.data, result]);
   const open =
     challenge.data?.challenge?.status === "SUBMISSION" &&
     new Date(challenge.data.challenge.submissionEnd) > new Date();
@@ -45,7 +57,7 @@ export default function Create() {
       const r = await fetch("/api/generate", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), style, format }),
+        body: JSON.stringify({ prompt: prompt.trim(), style, format, requestId: crypto.randomUUID() }),
       });
       const body = await r.json();
       if (!r.ok) throw new Error(body.error || "Generation request failed");
@@ -58,13 +70,13 @@ export default function Create() {
             ? "AI is creating your artwork…"
             : "Waiting for the generation worker…"
         );
-        if (job.status === "SUCCEEDED") {
+        if (["COMPLETED", "SUCCEEDED"].includes(job.status)) {
           setResult({ ...job, jobId: body.jobId });
           setTitle("Untitled Echo");
           setStatus("");
           return;
         }
-        if (job.status === "FAILED")
+        if (["FAILED", "REJECTED"].includes(job.status))
           throw new Error(job.error || "Image generation failed");
       }
       throw new Error(
@@ -132,6 +144,7 @@ export default function Create() {
         <StatusBadge
           status={challenge.data?.challenge?.status || "NO ACTIVE CHALLENGE"}
         />
+        {generations.data?.quota && <StatusBadge status={`${generations.data.quota.remaining} / ${generations.data.quota.limit} GENERATIONS LEFT`} />}
       </div>
       <div className="grid gap-6 lg:grid-cols-[.85fr_1.15fr]">
         <section className="panel rounded-2xl p-6 md:p-8">
@@ -309,6 +322,7 @@ export default function Create() {
           )}
         </section>
       </div>
+      {wallet.isSignedIn && <section className="panel mt-6 rounded-2xl p-6"><div className="flex items-center justify-between"><h2 className="display text-xl">MY GENERATIONS</h2><StatusBadge status={String(generations.data?.generations?.length || 0)} /></div><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{generations.data?.generations?.slice(0, 6).map((job: any) => <button key={job.id} className="rounded-xl border hairline p-4 text-left" onClick={() => { setResult({ ...job, jobId: job.id }); if (job.imageUrl) setTitle("Untitled Echo"); }}><p className="truncate text-sm text-white">{job.prompt}</p><p className="mt-2 text-[10px] tracking-wider text-cyan-200">{job.status}</p></button>)}</div></section>}
     </main>
   );
 }

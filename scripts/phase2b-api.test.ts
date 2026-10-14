@@ -1,0 +1,10 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { assertEligibleGeneration, assertSubmissionWindow } from "../lib/submission-policy";
+const now = new Date("2026-10-14T08:00:00Z");
+const challenge = { status: "SUBMISSION", submissionStart: new Date("2026-10-14T07:00:00Z"), submissionEnd: new Date("2026-10-14T09:00:00Z") };
+const job = { userId: "owner", challengeId: "challenge", status: "COMPLETED", moderationStatus: "APPROVED", asset: { uploadStatus: "UPLOADED", visibility: "PRIVATE" } };
+test("submission policy accepts only an open challenge", () => { assert.doesNotThrow(() => assertSubmissionWindow(challenge, now)); assert.throws(() => assertSubmissionWindow({ ...challenge, submissionEnd: now }, now)); assert.throws(() => assertSubmissionWindow({ ...challenge, status: "VOTING" }, now)); });
+test("submission policy rejects another user's generation", () => assert.throws(() => assertEligibleGeneration(job, "attacker", "challenge")));
+test("submission policy rejects unreviewed, failed, or unstored generations", () => { assert.throws(() => assertEligibleGeneration({ ...job, moderationStatus: "PENDING" }, "owner", "challenge")); assert.throws(() => assertEligibleGeneration({ ...job, status: "FAILED" }, "owner", "challenge")); assert.throws(() => assertEligibleGeneration({ ...job, asset: null }, "owner", "challenge")); });
+test("submission policy accepts the owner's approved private stored asset", () => assert.doesNotThrow(() => assertEligibleGeneration(job, "owner", "challenge")));
