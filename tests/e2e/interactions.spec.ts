@@ -43,6 +43,13 @@ test("API 500 displays error feedback and Retry makes a new request", async ({ p
   await expect.poll(() => calls).toBeGreaterThan(1);
 });
 
+test("home remains usable when the challenge API returns an error-shaped payload", async ({ page }) => {
+  await page.route("**/api/challenges/current", (route) => route.fulfill({ status: 200, json: { error: "DATABASE_NOT_CONFIGURED" } }));
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "NO ACTIVE CHALLENGE" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /IDEAS HAVE/ })).toBeVisible();
+});
+
 test("create and vote show honest wallet-required states", async ({ page }) => {
   await page.goto("/create");
   await expect(page.getByRole("button", { name: /CONNECT WALLET TO CREATE/ })).toBeDisabled();

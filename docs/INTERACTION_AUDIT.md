@@ -31,6 +31,7 @@ The scan found 32 JSX source locations containing buttons/links. After mapped de
 | Home | Empty-state documentation link | Navigate `/docs` | Real link | None | Covered by route suite | Pass |
 | Home | Artwork cards | Open gallery query for that artwork | Link exists only when an artwork exists | PostgreSQL/storage | Static | Data unavailable |
 | Home | Retry controls | Re-fetch failed query | Visible error and real refetch | API | Stubbed API 500 | Pass |
+| Home | Challenge error payload | Preserve page when API data is absent/malformed | Defensive optional access now renders the honest empty state instead of crashing | API | Browser regression | **Fixed** |
 | Create | Prompt / counters / selectors | Edit validated request | 800-character limit and minimum hint | None | Static | Pass |
 | Create | Generate | Submit one real generation request | Disabled without wallet/open challenge; loading prevents duplicate submission | Wallet, DB, Redis, OpenAI, storage | Browser unavailable-state | External flow blocked |
 | Create | Retry generation | Re-run failed request | Visible error button calls real generation path | Same as above | Static | Blocked externally |

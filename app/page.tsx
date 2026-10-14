@@ -76,7 +76,7 @@ export default function Home() {
               message="The current challenge could not be loaded."
               retry={() => challenge.refetch()}
             />
-          ) : challenge.data.challenge ? (
+          ) : challenge.data?.challenge ? (
             <ChallengeCard challenge={challenge.data.challenge} />
           ) : (
             <EmptyState
