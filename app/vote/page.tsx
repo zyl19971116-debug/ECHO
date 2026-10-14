@@ -11,13 +11,32 @@ import {
 import { getJson } from "@/lib/client-api";
 import { WalletSessionGuard } from "@/components/wallet-controls";
 import { useWalletSession } from "@/components/wallet-session-provider";
+import { ArtworkCard } from "@/components/artwork-card";
+import { useSignMessage } from "wagmi";
+import { useState } from "react";
+import { buildVoteMessage } from "@/lib/vote-message";
 export default function Vote() {
   const wallet = useWalletSession();
+  const { signMessageAsync } = useSignMessage();
+  const [pending, setPending] = useState<string | null>(null);
+  const [message, setMessage] = useState("");
   const q = useQuery({
     queryKey: ["vote-status"],
     queryFn: () => getJson<any>("/api/votes/status"),
     enabled: wallet.isSignedIn,
   });
+  async function vote(submissionId: string) {
+    if (!wallet.address || !q.data?.challenge) return;
+    setPending(submissionId); setMessage("");
+    try {
+      const nr = await fetch("/api/votes/nonce", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ challengeId: q.data.challenge.id, submissionId }) }); const nonce = await nr.json(); if (!nr.ok) throw new Error(nonce.error || "VOTE_NONCE_FAILED");
+      const intent = { domain: nonce.domain, challengeId: q.data.challenge.id, submissionId, wallet: wallet.address, nonce: nonce.nonce, deadline: nonce.deadline, chainId: nonce.chainId };
+      const signature = await signMessageAsync({ message: buildVoteMessage(intent) });
+      const vr = await fetch("/api/votes", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...intent, signature }) }); const saved = await vr.json(); if (!vr.ok) throw new Error(saved.error || "VOTE_FAILED");
+      setMessage("Your off-chain signed vote was saved."); await q.refetch();
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Vote signing was rejected."); }
+    finally { setPending(null); }
+  }
   return (
     <main className="shell pb-24">
       <PageTitle
@@ -42,7 +61,7 @@ export default function Vote() {
           copy="There is no submission or voting phase in progress."
         />
       ) : (
-        <div className="grid gap-5 lg:grid-cols-[1fr_.7fr]">
+        <div className="grid gap-5">
           <section className="panel rounded-2xl p-7">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span className="eyebrow">
@@ -55,7 +74,7 @@ export default function Vote() {
               <div className="rounded-xl border hairline p-4">
                 <div className="eyebrow">ELIGIBILITY</div>
                 <p className="mt-2 text-sm text-amber-200">
-                  Pending secure eligibility policy
+                  {q.data.eligible ? "Eligible · one wallet, one vote" : q.data.reason}
                 </p>
               </div>
               <div className="rounded-xl border hairline p-4">
@@ -66,20 +85,9 @@ export default function Vote() {
               </div>
             </div>
           </section>
-          <aside className="panel flex flex-col justify-center rounded-2xl p-7">
-            <StatusBadge status="TEMPORARILY UNAVAILABLE" />
-            <h3 className="display mt-5 text-xl">
-              SECURE VOTING UPGRADE IN PROGRESS
-            </h3>
-            <p className="mt-3 text-sm leading-6 text-[#8fa2ba]">
-              The existing endpoint does not yet consume a server-issued
-              one-time vote nonce or enforce anti-Sybil eligibility. Submission
-              is intentionally disabled—no vote will be simulated.
-            </p>
-            <button disabled className="btn mt-6 opacity-45">
-              VOTING NOT YET AVAILABLE
-            </button>
-          </aside>
+          <p className="text-xs text-[#8296b0]">OFF-CHAIN SIGNED VOTE · This one-wallet-one-vote policy is not full anti-Sybil protection. Live totals and rankings remain hidden.</p>
+          {message && <p role="status" className="rounded-xl border hairline p-4 text-sm text-cyan-200">{message}</p>}
+          <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{q.data.submissions.map((item: any) => <div key={item.id}><ArtworkCard artwork={item} /><button className="btn btn-primary mt-3 w-full disabled:opacity-50" disabled={!q.data.eligible || Boolean(q.data.vote) || Boolean(pending)} onClick={() => vote(item.id)}>{pending === item.id ? "WAITING FOR SIGNATURE…" : q.data.vote ? "VOTE RECORDED" : "SIGN & VOTE"}</button></div>)}</section>
         </div>
       )}
     </main>

@@ -1,10 +1,12 @@
 generator client {
   provider = "prisma-client-js"
 }
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 enum ChallengeStatus {
   DRAFT
   SUBMISSION
@@ -12,11 +14,13 @@ enum ChallengeStatus {
   REVEAL
   FINALIZED
 }
+
 enum SubmissionStatus {
   DRAFT
   SUBMITTED
   DISQUALIFIED
 }
+
 enum JobStatus {
   PENDING
   QUEUED
@@ -27,192 +31,284 @@ enum JobStatus {
   FAILED
   REJECTED
 }
+
 enum ModerationStatus {
   PENDING
   APPROVED
   REJECTED
   ERROR
 }
+
 enum AssetVisibility {
   PRIVATE
   PUBLIC
 }
+
 model User {
-  id String @id @default(cuid())
-  walletAddress String @unique
-  createdAt DateTime @default(now())
-  sessions WalletSession[]
-  submissions Submission[]
-  generations GenerationJob[]
-  quotas GenerationQuota[]
-  votes Vote[]
-  awards Award[]
+  id            String            @id @default(cuid())
+  walletAddress String            @unique
+  createdAt     DateTime          @default(now())
+  sessions      WalletSession[]
+  submissions   Submission[]
+  generations   GenerationJob[]
+  quotas        GenerationQuota[]
+  voteNonces    VoteNonce[]
+  votes         Vote[]
+  awards        Award[]
 }
+
 model WalletSession {
-  id String @id @default(cuid())
-  userId String?
-  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
-  address String
-  chainId Int?
-  nonce String @unique
-  expiresAt DateTime
+  id         String    @id @default(cuid())
+  userId     String?
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  address    String
+  chainId    Int?
+  nonce      String    @unique
+  expiresAt  DateTime
   verifiedAt DateTime?
-  revokedAt DateTime?
-  createdAt DateTime @default(now())
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
   @@index([address, verifiedAt])
 }
+
 model Challenge {
-  id String @id @default(cuid())
-  number Int @unique
-  title String
-  description String
-  theme String
-  submissionStart DateTime
-  submissionEnd DateTime
-  votingEnd DateTime
-  revealAt DateTime
-  status ChallengeStatus @default(DRAFT)
-  createdAt DateTime @default(now())
-  submissions Submission[]
-  votes Vote[]
-  result ChallengeResult?
-  echoNode EchoChainNode?
-  nextAnonymousNumber Int @default(1)
+  id                  String                   @id @default(cuid())
+  number              Int                      @unique
+  title               String
+  description         String
+  theme               String
+  submissionStart     DateTime
+  submissionEnd       DateTime
+  votingStart         DateTime?
+  votingEnd           DateTime
+  revealAt            DateTime
+  publishedAt         DateTime?
+  status              ChallengeStatus          @default(DRAFT)
+  createdAt           DateTime                 @default(now())
+  submissions         Submission[]
+  votes               Vote[]
+  result              ChallengeResult?
+  echoNode            EchoChainNode?
+  voteNonces          VoteNonce[]
+  resultEntries       ChallengeResultEntry[]
+  settlement          SettlementJob?
+  transitions         ChallengeTransitionLog[]
+  previousEchoNode    EchoChainNode?           @relation("EchoNextChallenge")
+  nextAnonymousNumber Int                      @default(1)
 }
+
 model Submission {
-  id String @id @default(cuid())
-  challengeId String
-  creatorUserId String
+  id              String                 @id @default(cuid())
+  challengeId     String
+  creatorUserId   String
   anonymousNumber Int
-  title String
-  description String
-  imageUrl String
-  imageHash String
-  assetId String? @unique
-  status SubmissionStatus @default(SUBMITTED)
-  createdAt DateTime @default(now())
-  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
-  creator User @relation(fields: [creatorUserId], references: [id], onDelete: Cascade)
-  asset StoredAsset? @relation(fields: [assetId], references: [id])
-  votes Vote[]
-  wonResult ChallengeResult?
-  awards Award[]
+  title           String
+  description     String
+  imageUrl        String
+  imageHash       String
+  assetId         String?                @unique
+  status          SubmissionStatus       @default(SUBMITTED)
+  createdAt       DateTime               @default(now())
+  challenge       Challenge              @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  creator         User                   @relation(fields: [creatorUserId], references: [id], onDelete: Cascade)
+  asset           StoredAsset?           @relation(fields: [assetId], references: [id])
+  votes           Vote[]
+  wonResult       ChallengeResult?
+  awards          Award[]
+  voteNonces      VoteNonce[]
+  resultEntries   ChallengeResultEntry[]
+
   @@unique([challengeId, anonymousNumber])
   @@unique([challengeId, creatorUserId])
   @@index([challengeId, createdAt])
 }
+
 model GenerationJob {
-  id String @id @default(cuid())
-  userId String
-  challengeId String
-  prompt String
-  style String
-  format String
-  status JobStatus @default(QUEUED)
-  imageUrl String?
-  error String?
-  errorCode String?
-  idempotencyKey String? @unique
+  id               String           @id @default(cuid())
+  userId           String
+  challengeId      String
+  prompt           String
+  style            String
+  format           String
+  status           JobStatus        @default(QUEUED)
+  imageUrl         String?
+  error            String?
+  errorCode        String?
+  idempotencyKey   String?          @unique
   moderationStatus ModerationStatus @default(PENDING)
-  assetId String? @unique
-  quotaDay String?
-  quotaFinalized Boolean @default(false)
-  quotaRefunded Boolean @default(false)
-  attempts Int @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  asset StoredAsset? @relation(fields: [assetId], references: [id])
+  assetId          String?          @unique
+  quotaDay         String?
+  quotaFinalized   Boolean          @default(false)
+  quotaRefunded    Boolean          @default(false)
+  attempts         Int              @default(0)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asset            StoredAsset?     @relation(fields: [assetId], references: [id])
+
   @@index([userId, createdAt])
 }
+
 model GenerationQuota {
-  id String @id @default(cuid())
-  userId String
-  day String
-  reserved Int @default(0)
-  consumed Int @default(0)
+  id        String   @id @default(cuid())
+  userId    String
+  day       String
+  reserved  Int      @default(0)
+  consumed  Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, day])
 }
+
 model StoredAsset {
-  id String @id @default(cuid())
-  provider String
-  objectKey String @unique
-  publicObjectKey String? @unique
-  mimeType String
-  fileSize Int
-  sha256 String
-  uploadStatus String
-  visibility AssetVisibility @default(PRIVATE)
-  createdAt DateTime @default(now())
-  generation GenerationJob?
-  submission Submission?
+  id              String          @id @default(cuid())
+  provider        String
+  objectKey       String          @unique
+  publicObjectKey String?         @unique
+  mimeType        String
+  fileSize        Int
+  sha256          String
+  uploadStatus    String
+  visibility      AssetVisibility @default(PRIVATE)
+  createdAt       DateTime        @default(now())
+  generation      GenerationJob?
+  submission      Submission?
+
   @@index([sha256])
 }
+
 model Vote {
-  id String @id @default(cuid())
-  challengeId String
-  submissionId String
-  voterUserId String
+  id            String     @id @default(cuid())
+  challengeId   String
+  submissionId  String
+  voterUserId   String
   signatureHash String
-  createdAt DateTime @default(now())
-  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
-  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  voter User @relation(fields: [voterUserId], references: [id], onDelete: Cascade)
+  createdAt     DateTime   @default(now())
+  challenge     Challenge  @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  submission    Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  voter         User       @relation(fields: [voterUserId], references: [id], onDelete: Cascade)
+
   @@unique([challengeId, voterUserId])
   @@index([submissionId])
 }
-model ChallengeResult {
-  id String @id @default(cuid())
-  challengeId String @unique
-  winnerSubmissionId String @unique
-  resultHash String
-  finalizedAt DateTime
-  transactionHash String?
-  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
-  winner Submission @relation(fields: [winnerSubmissionId], references: [id])
-}
-model Award {
-  id String @id @default(cuid())
-  challengeId String
+
+model VoteNonce {
+  id           String     @id @default(cuid())
+  userId       String
+  challengeId  String
   submissionId String
-  userId String
-  rank Int
-  claimedAt DateTime?
-  createdAt DateTime @default(now())
-  user User @relation(fields: [userId], references: [id])
-  submission Submission @relation(fields: [submissionId], references: [id])
-  nft NFTRecord?
+  nonceHash    String     @unique
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  createdAt    DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge    Challenge  @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, challengeId, expiresAt])
+}
+
+model ChallengeResult {
+  id                 String                 @id @default(cuid())
+  challengeId        String                 @unique
+  winnerSubmissionId String                 @unique
+  resultHash         String
+  finalizedAt        DateTime
+  transactionHash    String?
+  totalVotes         Int                    @default(0)
+  settlementVersion  Int                    @default(1)
+  challenge          Challenge              @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  winner             Submission             @relation(fields: [winnerSubmissionId], references: [id])
+  entries            ChallengeResultEntry[]
+}
+
+model ChallengeResultEntry {
+  id           String          @id @default(cuid())
+  challengeId  String
+  resultId     String
+  submissionId String
+  rank         Int
+  voteCount    Int
+  challenge    Challenge       @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  result       ChallengeResult @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  submission   Submission      @relation(fields: [submissionId], references: [id])
+
+  @@unique([challengeId, rank])
+  @@unique([challengeId, submissionId])
+}
+
+model SettlementJob {
+  id          String    @id @default(cuid())
+  challengeId String    @unique
+  status      String
+  attempts    Int       @default(0)
+  errorCode   String?
+  settledAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+}
+
+model ChallengeTransitionLog {
+  id             String          @id @default(cuid())
+  challengeId    String
+  fromStatus     ChallengeStatus
+  toStatus       ChallengeStatus
+  transitionedAt DateTime        @default(now())
+  challenge      Challenge       @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, fromStatus, toStatus])
+}
+
+model Award {
+  id           String     @id @default(cuid())
+  challengeId  String
+  submissionId String
+  userId       String
+  rank         Int
+  claimedAt    DateTime?
+  createdAt    DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id])
+  submission   Submission @relation(fields: [submissionId], references: [id])
+  nft          NFTRecord?
+
   @@unique([challengeId, rank])
 }
+
 model NFTRecord {
-  id String @id @default(cuid())
-  awardId String @unique
-  tokenId String?
+  id              String   @id @default(cuid())
+  awardId         String   @unique
+  tokenId         String?
   contractAddress String
-  chainId Int
+  chainId         Int
   transactionHash String?
-  status String
-  createdAt DateTime @default(now())
-  award Award @relation(fields: [awardId], references: [id], onDelete: Cascade)
+  status          String
+  createdAt       DateTime @default(now())
+  award           Award    @relation(fields: [awardId], references: [id], onDelete: Cascade)
 }
+
 model EchoChainNode {
-  id String @id @default(cuid())
-  challengeId String @unique
-  previousNodeId String?
-  relation String?
-  createdAt DateTime @default(now())
-  challenge Challenge @relation(fields: [challengeId], references: [id])
+  id              String     @id @default(cuid())
+  challengeId     String     @unique
+  previousNodeId  String?
+  relation        String?
+  nextChallengeId String?    @unique
+  createdAt       DateTime   @default(now())
+  challenge       Challenge  @relation(fields: [challengeId], references: [id])
+  nextChallenge   Challenge? @relation("EchoNextChallenge", fields: [nextChallengeId], references: [id])
 }
+
 model AuditLog {
-  id String @id @default(cuid())
+  id          String   @id @default(cuid())
   actorUserId String?
-  action String
-  entityType String
-  entityId String?
-  metadata Json?
-  createdAt DateTime @default(now())
+  action      String
+  entityType  String
+  entityId    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
   @@index([action, createdAt])
 }

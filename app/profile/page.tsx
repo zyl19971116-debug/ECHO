@@ -58,12 +58,14 @@ export default function Profile() {
       empty: "No generated artworks yet.",
     },
     {
-      name: "MY SUBMISSIONS",
+      name: "MY PARTICIPATIONS",
       items: p.submissions,
       empty: "No challenge submissions yet.",
     },
     { name: "MY VOTES", items: p.votes, empty: "No recorded votes yet." },
     { name: "MY AWARDS", items: p.awards, empty: "No awards yet." },
+    { name: "MY WINS", items: p.awards.filter((a: any) => a.rank === 1), empty: "No challenge wins yet." },
+    { name: "MY RESULTS", items: p.awards, empty: "No finalized placements yet." },
     {
       name: "MY NFTs",
       items: p.awards.filter((a: any) => a.nft),

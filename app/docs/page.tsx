@@ -18,18 +18,18 @@ const sections = [
   },
   {
     h: "Voting",
-    s: "COMING SOON",
-    p: "The existing signature endpoint is not exposed in the UI until server-issued one-time vote nonces and eligibility checks are implemented.",
+    s: "PARTIAL",
+    p: "Voting uses server-issued, single-use, expiring nonces bound to one wallet, challenge and submission, plus verified Robinhood Chain signatures. One-wallet-one-vote and self-vote prevention are live; this is explicitly not full anti-Sybil protection.",
   },
   {
     h: "Reveal System",
     s: "PARTIAL",
-    p: "Finalized database results can be displayed after reveal time. Automatic settlement and scheduled phase transitions are not implemented.",
+    p: "Deterministic persisted rankings, result hashes and scheduled lifecycle transitions are implemented. Results and author identities remain private until REVEAL; no onchain settlement is claimed.",
   },
   {
     h: "Echo Chain",
     s: "PARTIAL",
-    p: "The timeline reads real finalized EchoChainNode records. Automated and moderated next-theme creation is not yet implemented.",
+    p: "The timeline reads revealed EchoChainNode records and creates a moderator-review draft for the next challenge. Unapproved draft themes are not exposed publicly; automated AI theme approval is not claimed.",
   },
   {
     h: "Wallet & SIWE",
@@ -49,17 +49,17 @@ const sections = [
   {
     h: "Rate Limiting",
     s: "PARTIAL",
-    p: "SIWE and AI request endpoints use fail-closed Redis limits. Daily generation quota is a transactional PostgreSQL record with reservation, confirmation and defined refund behavior; production thresholds remain configuration-dependent.",
+    p: "SIWE, AI, vote nonce, vote submission and administrator mutation endpoints use fail-closed Redis limits. Daily generation quota is transactional; production thresholds remain configuration-dependent.",
   },
   {
     h: "Audit Logs",
-    s: "COMING SOON",
-    p: "The database model exists, but application and administrator actions are not yet written to it.",
+    s: "PARTIAL",
+    p: "Authentication, generation, submission, voting, challenge transitions, settlement and administrator actions write structured audit records. Operational retention and export tooling remain pending.",
   },
   {
     h: "Anti-Sybil",
     s: "COMING SOON",
-    p: "One-wallet-one-vote is not sufficient. Eligibility policy and abnormal-behavior monitoring are intentionally pending.",
+    p: "One-wallet-one-vote, signature verification, nonce replay protection and self-vote prevention are implemented. Proof-of-personhood, stake or abnormal-behavior monitoring are intentionally pending.",
   },
 ] as const;
 export default function Docs() {

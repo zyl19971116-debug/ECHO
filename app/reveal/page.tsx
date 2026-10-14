@@ -48,6 +48,7 @@ export default function Reveal() {
             </div>
             <StatusBadge status="FINALIZED" />
           </div>
+          <div className="panel mb-6 rounded-xl p-4 text-xs text-[#93a6bf]"><p>RESULT HASH · <span className="break-all text-cyan-200">{q.data.challenge.result.resultHash}</span></p><p className="mt-2">FINALIZED · {new Date(q.data.challenge.result.finalizedAt).toLocaleString()}</p><p className="mt-2">ONCHAIN · {q.data.challenge.result.transactionHash || "NOT RECORDED"}</p></div>
           <div className="grid gap-5 md:grid-cols-3">
             {q.data.podium.map((item: any) => (
               <div key={item.id}>

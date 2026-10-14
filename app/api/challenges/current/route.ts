@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 export async function GET() {
   try {
     const challenge = await db.challenge.findFirst({
-      where: { status: { in: ["SUBMISSION", "VOTING"] } },
+      where: { publishedAt: { not: null }, status: { in: ["DRAFT", "SUBMISSION", "VOTING", "FINALIZED"] } },
       orderBy: { number: "desc" },
       select: {
         id: true,
@@ -13,9 +13,11 @@ export async function GET() {
         theme: true,
         submissionStart: true,
         submissionEnd: true,
+        votingStart: true,
         votingEnd: true,
         revealAt: true,
         status: true,
+        _count: { select: { submissions: { where: { status: "SUBMITTED" } } } },
       },
     });
     return NextResponse.json({ challenge });
