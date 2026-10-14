@@ -12,14 +12,17 @@
     "worker": "tsx workers/index.ts",
     "worker:contest": "tsx workers/contest.ts",
     "worker:onchain": "tsx workers/onchain.ts",
-    "deploy:robinhood-testnet": "hardhat run scripts/deploy.ts --network robinhoodTestnet",
-    "verify:robinhood-testnet": "hardhat run scripts/verify.ts --network robinhoodTestnet",
+    "preflight:production": "tsx scripts/production-preflight.ts",
+    "preflight:migrations": "tsx scripts/migration-preflight.ts",
+    "deploy:robinhood-mainnet": "hardhat run scripts/deploy.ts --network robinhoodMainnet",
+    "verify:robinhood-mainnet": "hardhat run scripts/verify.ts --network robinhoodMainnet",
     "contracts:compile": "hardhat compile",
     "contracts:test": "hardhat test",
     "test:auth": "tsx --test scripts/auth-security.test.ts",
     "test:phase2b": "tsx --test scripts/phase2b.test.ts scripts/phase2b-api.test.ts",
     "test:phase3": "tsx --test scripts/phase3.test.ts",
-    "test:phase4": "tsx --test scripts/phase4.test.ts"
+    "test:phase4": "tsx --test scripts/phase4.test.ts",
+    "test:production": "tsx --test scripts/production-readiness.test.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1151.0",

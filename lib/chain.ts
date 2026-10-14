@@ -1,18 +1,18 @@
 import { defineChain } from "viem";
 
 export const ROBINHOOD_CHAIN_ID = Number(
-  process.env.NEXT_PUBLIC_ROBINHOOD_CHAIN_ID || 46630
+  process.env.NEXT_PUBLIC_ROBINHOOD_CHAIN_ID || 4663
 );
 
-export const robinhoodTestnet = defineChain({
+export const robinhoodChain = defineChain({
   id: ROBINHOOD_CHAIN_ID,
-  name: process.env.NEXT_PUBLIC_ROBINHOOD_CHAIN_NAME || "Robinhood Chain Testnet",
+  name: process.env.NEXT_PUBLIC_ROBINHOOD_CHAIN_NAME || "Robinhood Chain",
   nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
   rpcUrls: {
     default: {
       http: [
         process.env.NEXT_PUBLIC_ROBINHOOD_RPC_URL ||
-          "https://rpc.testnet.chain.robinhood.com",
+          "https://rpc.mainnet.chain.robinhood.com",
       ],
     },
   },
@@ -21,10 +21,10 @@ export const robinhoodTestnet = defineChain({
       name: "Robinhood Chain Explorer",
       url:
         process.env.NEXT_PUBLIC_ROBINHOOD_EXPLORER_URL ||
-        "https://explorer.testnet.chain.robinhood.com",
+        "https://robinhoodchain.blockscout.com",
     },
   },
-  testnet: true,
+  testnet: false,
 });
 
 export const walletConnectConfigured = Boolean(

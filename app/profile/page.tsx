@@ -109,7 +109,7 @@ export default function Profile() {
                         new Date(item.createdAt).toLocaleDateString()}
                     </p>
                     {item.nft?.tokenId && <p className="mt-2 text-xs text-[#8da0b9]">TOKEN {item.nft.tokenId} · RANK {item.rank} · CHAIN {item.nft.chainId}</p>}
-                    {item.nft?.transactionHash && <a className="mt-2 block text-xs text-cyan-300" href={`https://explorer.testnet.chain.robinhood.com/tx/${item.nft.transactionHash}`} target="_blank" rel="noreferrer">VIEW ON EXPLORER ↗</a>}
+                    {item.nft?.transactionHash && <a className="mt-2 block text-xs text-cyan-300" href={`https://robinhoodchain.blockscout.com/tx/${item.nft.transactionHash}`} target="_blank" rel="noreferrer">VIEW ON EXPLORER ↗</a>}
                   </div>
                 ))}
               </div>

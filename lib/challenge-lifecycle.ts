@@ -26,7 +26,7 @@ export async function advanceChallenge(id: string, now = new Date()) {
     if (next === "FINALIZED") { await settleChallenge(id, now); challenge = await db.challenge.findUniqueOrThrow({ where: { id }, include: { result: true } }); target = desiredChallengeStatus(challenge, Boolean(challenge.result), now); }
     if (next === "REVEAL" && challenge.result) {
       await createEchoContinuation(id, now);
-      if (process.env.ECHO_REGISTRY_ADDRESS && process.env.AWARD_MINTER_PRIVATE_KEY && process.env.REDIS_URL) {
+      if (process.env.ECHO_MAINNET_REGISTRY_ADDRESS && process.env.MAINNET_AWARD_MINTER_PRIVATE_KEY && process.env.MAINNET_TRANSACTION_APPROVED === "true" && process.env.REDIS_URL) {
         const { enqueueResult } = await import("@/lib/onchain-queue");
         await enqueueResult(id);
         await audit("ONCHAIN_RESULT_AUTO_QUEUED", "Challenge", id);

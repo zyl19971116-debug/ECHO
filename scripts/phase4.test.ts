@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { achievementMetadata } from "../lib/nft-metadata";
-import { assertRobinhoodTestnet, explorerTx, receiptOutcome } from "../lib/onchain-policy";
+import { assertRobinhoodChain, explorerTx, receiptOutcome } from "../lib/onchain-policy";
 test("NFT metadata is deterministic and contains public award facts", () => { const input = { challengeId: "challenge-1", challengeTheme: "Echoes", rank: 1, resultHash: "ab".repeat(32), awardDate: new Date("2026-10-14T00:00:00Z"), image: "https://assets.example/work.png" }; assert.deepEqual(achievementMetadata(input), achievementMetadata(input)); assert.equal(achievementMetadata(input).name, "ECHO Gold Achievement"); assert.throws(() => achievementMetadata({ ...input, image: "private/work.png" }), /PUBLIC_IMAGE_REQUIRED/); assert.throws(() => achievementMetadata({ ...input, rank: 4 }), /INVALID_RANK/); });
-test("wrong chains and reverted receipts fail closed", () => { assert.doesNotThrow(() => assertRobinhoodTestnet(46630)); assert.throws(() => assertRobinhoodTestnet(4663), /WRONG_CHAIN_ID/); assert.equal(receiptOutcome("success"), "CONFIRMED"); assert.throws(() => receiptOutcome("reverted"), /RECEIPT_FAILED/); });
-test("explorer links accept only real transaction hash shape", () => { const hash = `0x${"12".repeat(32)}`; assert.equal(explorerTx(hash), `https://explorer.testnet.chain.robinhood.com/tx/${hash}`); assert.throws(() => explorerTx("pending"), /INVALID_TRANSACTION_HASH/); });
+test("wrong chains and reverted receipts fail closed", () => { assert.doesNotThrow(() => assertRobinhoodChain(4663)); assert.throws(() => assertRobinhoodChain(46630), /WRONG_CHAIN_ID/); assert.equal(receiptOutcome("success"), "CONFIRMED"); assert.throws(() => receiptOutcome("reverted"), /RECEIPT_FAILED/); });
+test("explorer links accept only real transaction hash shape", () => { const hash = `0x${"12".repeat(32)}`; assert.equal(explorerTx(hash), `https://robinhoodchain.blockscout.com/tx/${hash}`); assert.throws(() => explorerTx("pending"), /INVALID_TRANSACTION_HASH/); });

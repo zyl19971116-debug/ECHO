@@ -1,4 +1,4 @@
-import { CopyObjectCommand, DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { CopyObjectCommand, DeleteObjectCommand, GetObjectCommand, HeadBucketCommand, HeadObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
 
@@ -27,6 +27,7 @@ export const storage = {
   async getSignedUrl(objectKey: string) { const c = config(); return getSignedUrl(client(), new GetObjectCommand({ Bucket: c.bucket, Key: objectKey }), { expiresIn: 300 }); },
   async deleteObject(objectKey: string) { const c = config(); await client().send(new DeleteObjectCommand({ Bucket: c.bucket, Key: objectKey })); },
   async getObjectMetadata(objectKey: string) { const c = config(); return client().send(new HeadObjectCommand({ Bucket: c.bucket, Key: objectKey })); },
+  async healthCheck() { const c = config(); await client().send(new HeadBucketCommand({ Bucket: c.bucket })); return true; },
   async uploadPublicJson(objectKey: string, value: unknown) {
     const c = config();
     const base = process.env.NFT_METADATA_BASE_URL || process.env.PUBLIC_ASSET_BASE_URL;

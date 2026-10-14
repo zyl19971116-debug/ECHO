@@ -2,13 +2,13 @@
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Check, Copy, ExternalLink, LogOut, Wallet } from "lucide-react";
 import { useState } from "react";
-import { robinhoodTestnet, walletConnectConfigured } from "@/lib/chain";
+import { robinhoodChain, walletConnectConfigured } from "@/lib/chain";
 import { useWalletSession } from "@/components/wallet-session-provider";
 
 export function NetworkBadge() {
   const wallet = useWalletSession();
   if (!wallet.isConnected) return <span className="display flex items-center gap-2 text-[9px] tracking-[.14em] text-[#91a6c3]"><i className="h-1.5 w-1.5 rounded-full bg-slate-500" />WALLET DISCONNECTED</span>;
-  return <span className={`display flex items-center gap-2 text-[9px] tracking-[.14em] ${wallet.isCorrectNetwork ? "text-emerald-300" : "text-amber-300"}`}><i className={`h-1.5 w-1.5 rounded-full ${wallet.isCorrectNetwork ? "bg-emerald-400" : "bg-amber-400"}`} />{wallet.isCorrectNetwork ? "ROBINHOOD TESTNET" : "WRONG NETWORK"}</span>;
+  return <span className={`display flex items-center gap-2 text-[9px] tracking-[.14em] ${wallet.isCorrectNetwork ? "text-emerald-300" : "text-amber-300"}`}><i className={`h-1.5 w-1.5 rounded-full ${wallet.isCorrectNetwork ? "bg-emerald-400" : "bg-amber-400"}`} />{wallet.isCorrectNetwork ? "ROBINHOOD MAINNET" : "WRONG NETWORK"}</span>;
 }
 
 export function SwitchNetworkButton() {
@@ -36,7 +36,7 @@ export function WalletConnectButton({ mobile = false }: { mobile?: boolean }) {
         <SwitchNetworkButton />
         {!wallet.isSignedIn ? <button disabled={wallet.isSigningIn || !wallet.isCorrectNetwork} className="btn btn-primary disabled:opacity-50" onClick={() => wallet.signIn().catch(() => undefined)}>{wallet.isSigningIn ? "WAITING FOR SIGNATURE…" : "SIGN IN"}</button> : <span className="btn justify-center text-emerald-300"><Check size={14} />SIGNED IN</span>}
         <button className="btn" onClick={async () => { if (wallet.address) await navigator.clipboard.writeText(wallet.address); setCopied(true); }}><Copy size={14} />{copied ? "COPIED" : "COPY ADDRESS"}</button>
-        {wallet.address && <a className="btn" target="_blank" rel="noreferrer" href={`${robinhoodTestnet.blockExplorers.default.url}/address/${wallet.address}`}><ExternalLink size={14} />EXPLORER</a>}
+        {wallet.address && <a className="btn" target="_blank" rel="noreferrer" href={`${robinhoodChain.blockExplorers.default.url}/address/${wallet.address}`}><ExternalLink size={14} />EXPLORER</a>}
         {wallet.isSignedIn && <button className="btn" onClick={() => wallet.signOut().catch(() => undefined)}>SIGN OUT</button>}
         <button className="btn" onClick={() => wallet.disconnectWallet().catch(() => undefined)}><LogOut size={14} />DISCONNECT</button>
       </div>

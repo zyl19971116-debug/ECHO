@@ -8,12 +8,12 @@ const now = new Date("2026-10-14T08:00:00.000Z");
 const valid = {
   domain: "localhost:3002",
   uri: "http://localhost:3002",
-  chainId: 46630,
+  chainId: 4663,
   issuedAt: new Date(now.getTime() - 1_000).toISOString(),
   expirationTime: new Date(now.getTime() + 9 * 60_000).toISOString(),
 };
 
-test("accepts a bound, current Robinhood testnet SIWE message", () => {
+test("accepts a bound, current Robinhood mainnet SIWE message", () => {
   assert.doesNotThrow(() => validateSiweFields(valid, "http://localhost:3002", now));
 });
 

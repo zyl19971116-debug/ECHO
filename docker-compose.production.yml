@@ -1,0 +1,36 @@
+services:
+  web:
+    build: .
+    env_file: .env.production
+    command: npm start
+    ports: ["127.0.0.1:3000:3000"]
+    restart: unless-stopped
+    healthcheck: { test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>{if(!r.ok)process.exit(1)})"], interval: 30s, timeout: 5s, retries: 3 }
+  ai-worker:
+    build: .
+    env_file: .env.production
+    command: npm run worker
+    restart: unless-stopped
+  contest-worker:
+    build: .
+    env_file: .env.production
+    command: npm run worker:contest
+    restart: unless-stopped
+  onchain-worker:
+    build: .
+    env_file: .env.production
+    command: npm run worker:onchain
+    restart: unless-stopped
+  postgres:
+    image: postgres:17-alpine
+    environment: { POSTGRES_DB: echo_market, POSTGRES_USER: echo_user, POSTGRES_PASSWORD: CHANGE_ME }
+    volumes: ["postgres_data:/var/lib/postgresql/data"]
+    restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "CHANGE_ME"]
+    volumes: ["redis_data:/data"]
+    restart: unless-stopped
+volumes:
+  postgres_data:
+  redis_data:

@@ -7,6 +7,7 @@ import { confirmQuota, refundQuota } from "../lib/quota";
 import { storage } from "../lib/storage";
 import { normalizeGeneratedImage } from "../lib/image-processing";
 import { failedAttemptStatus } from "../lib/worker-state";
+import { superviseWorker } from "../lib/worker-runtime";
 
 if (!process.env.REDIS_URL || !process.env.OPENAI_API_KEY) throw new Error("REDIS_URL and OPENAI_API_KEY are required");
 const redis = new URL(process.env.REDIS_URL);
@@ -56,3 +57,4 @@ worker.on("failed", async (job, error) => {
   await audit(final ? "AI_GENERATION_FAILED" : "AI_GENERATION_RETRYING", "GenerationJob", id, row.userId, { attemptsMade: job.attemptsMade, reasonCode: error.name });
 });
 console.log("Echo image worker ready");
+superviseWorker(worker, "image-generation");

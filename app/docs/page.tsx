@@ -44,7 +44,7 @@ const sections = [
   {
     h: "Onchain Verification",
     s: "PARTIAL",
-    p: "Robinhood Chain Testnet result registration, confirmation tracking, explorer links and Blockscout verification scripts are implemented. Contracts remain unverified and undeployed until credentials and funded testnet accounts are configured.",
+    p: "Robinhood Chain mainnet configuration, result registration, confirmation tracking, explorer links and Blockscout verification scripts are implemented behind explicit transaction approval. Contracts remain NOT DEPLOYED until audited addresses and successful receipts exist.",
   },
   {
     h: "Rate Limiting",
